@@ -5,9 +5,11 @@
   <section class="cost-card-debug" v-if="currentRecordId">
     <span>debug</span>
     <span>wait={{ shouldWaitForData ? 'Y' : 'N' }}</span>
+    <span>loading={{ isLoading ? 'Y' : 'N' }}</span>
     <span>ver={{ formRenderVersion }}</span>
     <span>code={{ loadedData?.product?.product_code || '-' }}</span>
     <span>name={{ loadedData?.product?.product_name || '-' }}</span>
+    <span v-if="lastLoadError">err={{ lastLoadError }}</span>
   </section>
   <CostCardFormBase
     v-else
@@ -42,9 +44,11 @@ function debugLog(stage, payload) {
 }
 
 const loadedData = ref(null)
+const isLoading = ref(false)
+const lastLoadError = ref('')
 const formRenderVersion = ref(0)
 const formRenderKey = computed(() => `${currentRecordId.value || 'new'}:${formRenderVersion.value}`)
-const shouldWaitForData = computed(() => !!currentRecordId.value && !loadedData.value)
+const shouldWaitForData = computed(() => !!currentRecordId.value && isLoading.value)
 const currentRecordId = computed(() => {
   const routeQuery = pluginContext.query.value || {}
   const candidates = [
@@ -361,80 +365,105 @@ async function loadDetailRowsByCardNo(cardNo, entityCode) {
 async function loadById(recordId) {
   if (!recordId) return
   debugLog('loadById:start', { recordId })
-  const mainRecord = await loadMainRecord(recordId)
-  if (!mainRecord) {
-    debugLog('loadById:main-empty', { recordId })
-    return
-  }
-
-  const normalizedMain = unwrapRecordData(mainRecord)
-  const cardNo =
-    normalizedMain.card_no ||
-    normalizedMain.cardNo ||
-    ''
-  debugLog('loadById:main-ready', {
-    recordId,
-    cardNo,
-    id: normalizedMain.id,
-    product_code: normalizedMain.product_code,
-    product_name: normalizedMain.product_name
-  })
-  const [materialRows, laborRows, expenseRows] = await Promise.all([
-    loadDetailRowsByCardNo(cardNo, 'cost_card_material'),
-    loadDetailRowsByCardNo(cardNo, 'cost_card_labor'),
-    loadDetailRowsByCardNo(cardNo, 'cost_card_expense')
-  ])
-
-  loadedData.value = {
-    product: normalizeRecord(normalizedMain),
-    materialRows: Array.isArray(materialRows)
-      ? materialRows.map((row, index) => {
-        const normalized = normalizeDetailRow(row, 'material')
-        if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
-        return normalized
-      })
-      : undefined,
-    laborRows: Array.isArray(laborRows)
-      ? laborRows.map((row, index) => {
-        const normalized = normalizeDetailRow(row, 'labor')
-        if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
-        return normalized
-      })
-      : undefined,
-    expenseRows: Array.isArray(expenseRows)
-      ? expenseRows.map((row, index) => {
-        const normalized = normalizeDetailRow(row, 'expense')
-        if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
-        return normalized
-      })
-      : undefined
-  }
-  formRenderVersion.value += 1
-  const productSnapshot = loadedData.value?.product && typeof loadedData.value.product === 'object'
-    ? {
-      product_code: loadedData.value.product.product_code,
-      version_no: loadedData.value.product.version_no,
-      product_name: loadedData.value.product.product_name,
-      factory: loadedData.value.product.factory,
-      product_category: loadedData.value.product.product_category,
-      customer_name: loadedData.value.product.customer_name,
-      tax_rate: loadedData.value.product.tax_rate,
-      quoted_price_tax: loadedData.value.product.quoted_price_tax,
-      sales_revenue: loadedData.value.product.sales_revenue,
-      rebate_rate: loadedData.value.product.rebate_rate,
-      account_period_days: loadedData.value.product.account_period_days,
-      freight_amount: loadedData.value.product.freight_amount
+  isLoading.value = true
+  lastLoadError.value = ''
+  try {
+    const mainRecord = await loadMainRecord(recordId)
+    if (!mainRecord) {
+      loadedData.value = {
+        product: {},
+        materialRows: [],
+        laborRows: [],
+        expenseRows: []
+      }
+      formRenderVersion.value += 1
+      debugLog('loadById:main-empty', { recordId })
+      return
     }
-    : null
-  debugLog('loadById:done', {
-    recordId,
-    cardNo,
-    formRenderVersion: formRenderVersion.value,
-    product: productSnapshot,
-    materialCount: loadedData.value.materialRows?.length || 0,
-    laborCount: loadedData.value.laborRows?.length || 0,
-    expenseCount: loadedData.value.expenseRows?.length || 0
-  })
+
+    const normalizedMain = unwrapRecordData(mainRecord)
+    const cardNo =
+      normalizedMain.card_no ||
+      normalizedMain.cardNo ||
+      ''
+    debugLog('loadById:main-ready', {
+      recordId,
+      cardNo,
+      id: normalizedMain.id,
+      product_code: normalizedMain.product_code,
+      product_name: normalizedMain.product_name
+    })
+    const [materialRows, laborRows, expenseRows] = await Promise.all([
+      loadDetailRowsByCardNo(cardNo, 'cost_card_material'),
+      loadDetailRowsByCardNo(cardNo, 'cost_card_labor'),
+      loadDetailRowsByCardNo(cardNo, 'cost_card_expense')
+    ])
+
+    loadedData.value = {
+      product: normalizeRecord(normalizedMain),
+      materialRows: Array.isArray(materialRows)
+        ? materialRows.map((row, index) => {
+          const normalized = normalizeDetailRow(row, 'material')
+          if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
+          return normalized
+        })
+        : undefined,
+      laborRows: Array.isArray(laborRows)
+        ? laborRows.map((row, index) => {
+          const normalized = normalizeDetailRow(row, 'labor')
+          if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
+          return normalized
+        })
+        : undefined,
+      expenseRows: Array.isArray(expenseRows)
+        ? expenseRows.map((row, index) => {
+          const normalized = normalizeDetailRow(row, 'expense')
+          if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
+          return normalized
+        })
+        : undefined
+    }
+    formRenderVersion.value += 1
+    const productSnapshot = loadedData.value?.product && typeof loadedData.value.product === 'object'
+      ? {
+        product_code: loadedData.value.product.product_code,
+        version_no: loadedData.value.product.version_no,
+        product_name: loadedData.value.product.product_name,
+        factory: loadedData.value.product.factory,
+        product_category: loadedData.value.product.product_category,
+        customer_name: loadedData.value.product.customer_name,
+        tax_rate: loadedData.value.product.tax_rate,
+        quoted_price_tax: loadedData.value.product.quoted_price_tax,
+        sales_revenue: loadedData.value.product.sales_revenue,
+        rebate_rate: loadedData.value.product.rebate_rate,
+        account_period_days: loadedData.value.product.account_period_days,
+        freight_amount: loadedData.value.product.freight_amount
+      }
+      : null
+    debugLog('loadById:done', {
+      recordId,
+      cardNo,
+      formRenderVersion: formRenderVersion.value,
+      product: productSnapshot,
+      materialCount: loadedData.value.materialRows?.length || 0,
+      laborCount: loadedData.value.laborRows?.length || 0,
+      expenseCount: loadedData.value.expenseRows?.length || 0
+    })
+  }
+  catch (error) {
+    loadedData.value = {
+      product: {},
+      materialRows: [],
+      laborRows: [],
+      expenseRows: []
+    }
+    formRenderVersion.value += 1
+    lastLoadError.value = error instanceof Error ? error.message : String(error)
+    debugLog('loadById:error', { recordId, error: lastLoadError.value })
+  }
+  finally {
+    isLoading.value = false
+  }
 }
 
 watch(
@@ -443,6 +472,8 @@ watch(
     debugLog('watch:currentRecordId', { recordId })
     if (!recordId) {
       loadedData.value = null
+      isLoading.value = false
+      lastLoadError.value = ''
       formRenderVersion.value += 1
       debugLog('watch:clear-loaded-data', null)
       return
