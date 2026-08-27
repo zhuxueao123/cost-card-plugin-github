@@ -22,6 +22,11 @@ const { configState, sceneTitle } = useCostCardSceneConfig('cc_create', COST_CAR
 const pluginContext = usePluginContext()
 const hostDataApi = useHostDataApi()
 const MAIN_ENTITY_CODE = 'cost_card'
+const DEBUG_PREFIX = '[cost-card-create]'
+
+function debugLog(stage, payload) {
+  console.info(`${DEBUG_PREFIX} ${stage}`, payload)
+}
 
 const loadedData = ref(null)
 const currentRecordId = computed(() => {
@@ -36,11 +41,18 @@ const currentRecordId = computed(() => {
     routeQuery.card_no,
     routeQuery.cardNo
   ]
+  debugLog('resolve-record-id:candidates', {
+    routeQuery,
+    pluginRecordId: pluginContext.recordId.value,
+    candidates
+  })
   for (const value of candidates) {
     if (value !== undefined && value !== null && String(value).trim() !== '') {
+      debugLog('resolve-record-id:matched', { value: String(value).trim() })
       return String(value).trim()
     }
   }
+  debugLog('resolve-record-id:empty', null)
   return ''
 })
 
@@ -151,8 +163,13 @@ async function loadMainRecordByHostApi(recordId) {
   let payload = null
   try {
     payload = await hostDataApi.getRecord(MAIN_ENTITY_CODE, recordId)
+    debugLog('main:getRecord:success', {
+      recordId,
+      payloadKeys: payload && typeof payload === 'object' ? Object.keys(payload) : typeof payload
+    })
   }
   catch (_error) {
+    debugLog('main:getRecord:failed', { recordId })
     payload = null
   }
 
@@ -160,6 +177,13 @@ async function loadMainRecordByHostApi(recordId) {
   if (normalized && (normalized.record || normalized.model || normalized.id || normalized.product_code)) {
     const candidate = normalized.record || normalized.model || normalized
     const unwrapped = unwrapRecordData(candidate)
+    debugLog('main:getRecord:normalized', {
+      recordId,
+      id: unwrapped.id,
+      card_no: unwrapped.card_no || unwrapped.cardNo,
+      product_code: unwrapped.product_code,
+      product_name: unwrapped.product_name
+    })
     if (unwrapped.product_code || unwrapped.product_name || unwrapped.card_no || unwrapped.cardNo) {
       return candidate
     }
@@ -192,17 +216,21 @@ async function loadMainRecordByHostApi(recordId) {
     let queryPayload = null
     try {
       queryPayload = await hostDataApi.queryRecords(MAIN_ENTITY_CODE, body)
+      debugLog('main:queryRecords:success', { recordId, body })
     }
     catch (_error) {
+      debugLog('main:queryRecords:failed', { recordId, body })
       continue
     }
 
     const rows = extractRowsFromPayload(queryPayload)
+    debugLog('main:queryRecords:rows', { recordId, body, rowCount: rows.length })
     if (!rows.length) continue
     const first = rows[0]
     if (first && typeof first === 'object') return first
   }
 
+  debugLog('main:record-not-found', { recordId })
   return null
 }
 
@@ -280,29 +308,46 @@ async function loadDetailRowsByCardNo(cardNo, entityCode) {
     let payload = null
     try {
       payload = await hostDataApi.queryRecords(entityCode, body)
+      debugLog('detail:query:success', { entityCode, cardNo, body })
     }
     catch (_error) {
+      debugLog('detail:query:failed', { entityCode, cardNo, body })
       continue
     }
 
     const normalized = normalizeJsonPayload(payload)
     const rows = normalized?.records || normalized?.items || normalized?.rows || normalized?.data
-    if (Array.isArray(rows)) return rows
+    if (Array.isArray(rows)) {
+      debugLog('detail:query:rows', { entityCode, cardNo, rowCount: rows.length })
+      return rows
+    }
   }
 
+  debugLog('detail:query:not-found', { entityCode, cardNo })
   return null
 }
 
 async function loadById(recordId) {
   if (!recordId) return
+  debugLog('loadById:start', { recordId })
   const mainRecord = await loadMainRecord(recordId)
-  if (!mainRecord) return
+  if (!mainRecord) {
+    debugLog('loadById:main-empty', { recordId })
+    return
+  }
 
   const normalizedMain = unwrapRecordData(mainRecord)
   const cardNo =
     normalizedMain.card_no ||
     normalizedMain.cardNo ||
     ''
+  debugLog('loadById:main-ready', {
+    recordId,
+    cardNo,
+    id: normalizedMain.id,
+    product_code: normalizedMain.product_code,
+    product_name: normalizedMain.product_name
+  })
   const [materialRows, laborRows, expenseRows] = await Promise.all([
     loadDetailRowsByCardNo(cardNo, 'cost_card_material'),
     loadDetailRowsByCardNo(cardNo, 'cost_card_labor'),
@@ -333,13 +378,23 @@ async function loadById(recordId) {
       })
       : undefined
   }
+  debugLog('loadById:done', {
+    recordId,
+    cardNo,
+    product: loadedData.value.product,
+    materialCount: loadedData.value.materialRows?.length || 0,
+    laborCount: loadedData.value.laborRows?.length || 0,
+    expenseCount: loadedData.value.expenseRows?.length || 0
+  })
 }
 
 watch(
   currentRecordId,
   async (recordId) => {
+    debugLog('watch:currentRecordId', { recordId })
     if (!recordId) {
       loadedData.value = null
+      debugLog('watch:clear-loaded-data', null)
       return
     }
     await loadById(recordId)
