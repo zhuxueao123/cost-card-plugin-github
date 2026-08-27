@@ -12,32 +12,28 @@
         <div class="grid product-grid">
           <label v-for="f in visibleProductFields" :key="f.key" class="field">
             <span>{{ f.label }}</span>
-            <input
-              :ref="(el) => setProductInputRef(f.key, el)"
-              v-model="product[f.key]"
-              :readonly="!productEditable"
-            />
+            <input v-model="product[f.key]" :readonly="!productEditable" />
           </label>
         </div>
         <div class="summary-cards">
           <article class="summary-card sc-blue">
             <div class="title">材料成本</div>
-            <div :ref="(el) => setTextRef('summary.materialAmount', el)" class="amount">{{ summaryView.materialAmount }}</div>
-            <div :ref="(el) => setTextRef('summary.materialRatio', el)" class="ratio">{{ summaryView.materialRatio }}</div>
+            <div class="amount">{{ summaryView.materialAmount }}</div>
+            <div class="ratio">{{ summaryView.materialRatio }}</div>
           </article>
           <article class="summary-card sc-green">
             <div class="title">人工成本</div>
-            <div :ref="(el) => setTextRef('summary.laborAmount', el)" class="amount">{{ summaryView.laborAmount }}</div>
-            <div :ref="(el) => setTextRef('summary.laborRatio', el)" class="ratio">{{ summaryView.laborRatio }}</div>
+            <div class="amount">{{ summaryView.laborAmount }}</div>
+            <div class="ratio">{{ summaryView.laborRatio }}</div>
           </article>
           <article class="summary-card sc-orange">
             <div class="title">费用成本</div>
-            <div :ref="(el) => setTextRef('summary.expenseAmount', el)" class="amount">{{ summaryView.expenseAmount }}</div>
-            <div :ref="(el) => setTextRef('summary.expenseRatio', el)" class="ratio">{{ summaryView.expenseRatio }}</div>
+            <div class="amount">{{ summaryView.expenseAmount }}</div>
+            <div class="ratio">{{ summaryView.expenseRatio }}</div>
           </article>
           <article class="summary-card sc-total">
             <div class="title">总成本</div>
-            <div :ref="(el) => setTextRef('summary.totalCost', el)" class="amount">{{ summaryView.totalCost }}</div>
+            <div class="amount">{{ summaryView.totalCost }}</div>
           </article>
         </div>
       </div>
@@ -50,22 +46,22 @@
           <div class="inner-panel">
             <h3>销售报价</h3>
             <div class="grid quote-grid">
-              <label class="field"><span>税率</span><input :ref="(el) => setInputRef('quote.taxRate', el)" :value="quoteView.taxRate" readonly /></label>
-              <label class="field"><span>销售含税报价</span><input :ref="(el) => setInputRef('quote.quotedPriceTax', el)" :value="quoteView.quotedPriceTax" readonly /></label>
-              <label class="field"><span>销售收入</span><input :ref="(el) => setInputRef('quote.salesRevenue', el)" :value="quoteView.salesRevenue" readonly /></label>
-              <label class="field"><span>票前扣点与返利</span><input :ref="(el) => setInputRef('quote.rebateRate', el)" :value="quoteView.rebateRate" readonly /></label>
-              <label class="field"><span>账期</span><input :ref="(el) => setInputRef('quote.accountPeriodDays', el)" :value="quoteView.accountPeriodDays" readonly /></label>
-              <label class="field"><span>运费</span><input :ref="(el) => setInputRef('quote.freightAmount', el)" :value="quoteView.freightAmount" readonly /></label>
+              <label class="field"><span>税率</span><input :value="quoteView.taxRate" readonly /></label>
+              <label class="field"><span>销售含税报价</span><input :value="quoteView.quotedPriceTax" readonly /></label>
+              <label class="field"><span>销售收入</span><input :value="quoteView.salesRevenue" readonly /></label>
+              <label class="field"><span>票前扣点与返利</span><input :value="quoteView.rebateRate" readonly /></label>
+              <label class="field"><span>账期</span><input :value="quoteView.accountPeriodDays" readonly /></label>
+              <label class="field"><span>运费</span><input :value="quoteView.freightAmount" readonly /></label>
             </div>
           </div>
           <div class="inner-panel">
             <h3>利润</h3>
             <div class="profit-cards">
-              <article class="profit-card pc-blue"><span>边际贡献</span><b :ref="(el) => setTextRef('profit.contributionAmount', el)">{{ profitView.contributionAmount }}</b><em :ref="(el) => setTextRef('profit.contributionRate', el)">{{ profitView.contributionRate }}</em></article>
-              <article class="profit-card pc-green"><span>毛利额</span><b :ref="(el) => setTextRef('profit.grossProfitAmount', el)">{{ profitView.grossProfitAmount }}</b><em :ref="(el) => setTextRef('profit.grossProfitRate', el)">{{ profitView.grossProfitRate }}</em></article>
-              <article class="profit-card pc-orange"><span>税前利润</span><b :ref="(el) => setTextRef('profit.pretaxProfitAmount', el)">{{ profitView.pretaxProfitAmount }}</b><em :ref="(el) => setTextRef('profit.pretaxProfitRate', el)">{{ profitView.pretaxProfitRate }}</em></article>
-              <article class="profit-card pc-dark"><span>所得税</span><b :ref="(el) => setTextRef('profit.incomeTaxAmount', el)">{{ profitView.incomeTaxAmount }}</b><em :ref="(el) => setTextRef('profit.incomeTaxRate', el)">{{ profitView.incomeTaxRate }}</em></article>
-              <article class="profit-card pc-main"><span>净利润</span><b :ref="(el) => setTextRef('profit.netProfitAmount', el)">{{ profitView.netProfitAmount }}</b><em :ref="(el) => setTextRef('profit.netProfitRate', el)">{{ profitView.netProfitRate }}</em></article>
+              <article class="profit-card pc-blue"><span>边际贡献</span><b>{{ profitView.contributionAmount }}</b><em>{{ profitView.contributionRate }}</em></article>
+              <article class="profit-card pc-green"><span>毛利额</span><b>{{ profitView.grossProfitAmount }}</b><em>{{ profitView.grossProfitRate }}</em></article>
+              <article class="profit-card pc-orange"><span>税前利润</span><b>{{ profitView.pretaxProfitAmount }}</b><em>{{ profitView.pretaxProfitRate }}</em></article>
+              <article class="profit-card pc-dark"><span>所得税</span><b>{{ profitView.incomeTaxAmount }}</b><em>{{ profitView.incomeTaxRate }}</em></article>
+              <article class="profit-card pc-main"><span>净利润</span><b>{{ profitView.netProfitAmount }}</b><em>{{ profitView.netProfitRate }}</em></article>
             </div>
           </div>
         </div>
@@ -74,9 +70,9 @@
           <div class="ratio-wrap">
             <div class="ratio-ring" :style="ratioRingStyle"></div>
             <ul class="legend">
-              <li><i class="c1"></i><span :ref="(el) => setTextRef('ratio.materialLabel', el)">材料 {{ summaryView.materialAmount }}</span><b :ref="(el) => setTextRef('ratio.materialRatio', el)">{{ ratioChartView.materialRatio }}</b></li>
-              <li><i class="c3"></i><span :ref="(el) => setTextRef('ratio.laborLabel', el)">人工 {{ summaryView.laborAmount }}</span><b :ref="(el) => setTextRef('ratio.laborRatio', el)">{{ ratioChartView.laborRatio }}</b></li>
-              <li><i class="c2"></i><span :ref="(el) => setTextRef('ratio.expenseLabel', el)">费用 {{ summaryView.expenseAmount }}</span><b :ref="(el) => setTextRef('ratio.expenseRatio', el)">{{ ratioChartView.expenseRatio }}</b></li>
+              <li><i class="c1"></i><span>材料 {{ summaryView.materialAmount }}</span><b>{{ ratioChartView.materialRatio }}</b></li>
+              <li><i class="c3"></i><span>人工 {{ summaryView.laborAmount }}</span><b>{{ ratioChartView.laborRatio }}</b></li>
+              <li><i class="c2"></i><span>费用 {{ summaryView.expenseAmount }}</span><b>{{ ratioChartView.expenseRatio }}</b></li>
             </ul>
           </div>
         </aside>
@@ -228,9 +224,6 @@ const props = defineProps({
 
 const hostDataApi = useHostDataApi()
 const rootRef = ref(null)
-const productInputRefs = {}
-const plainInputRefs = {}
-const textRefs = {}
 
 const PRODUCT_FIELDS = [
   { key: 'product_code', label: '产品编码' },
@@ -400,21 +393,6 @@ function debugLog(stage, payload) {
   console.info(`[cost-card-form-base] ${stage}`, payload)
 }
 
-function setProductInputRef(key, el) {
-  if (el) productInputRefs[key] = el
-  else delete productInputRefs[key]
-}
-
-function setInputRef(key, el) {
-  if (el) plainInputRefs[key] = el
-  else delete plainInputRefs[key]
-}
-
-function setTextRef(key, el) {
-  if (el) textRefs[key] = el
-  else delete textRefs[key]
-}
-
 function syncInputValue(el, value) {
   if (!el) return
   const nextValue = value ?? ''
@@ -449,42 +427,88 @@ function syncTableValues(selector, rows, columns) {
 }
 
 function syncRenderedDom() {
-  visibleProductFields.value.forEach((field) => {
-    syncInputValue(productInputRefs[field.key], product[field.key] ?? '')
+  const root = rootRef.value
+  if (!root) return
+
+  const productInputs = Array.from(root.querySelectorAll('.product-grid input'))
+  visibleProductFields.value.forEach((field, index) => {
+    syncInputValue(productInputs[index], product[field.key] ?? '')
   })
 
-  syncInputValue(plainInputRefs['quote.taxRate'], quoteView.value.taxRate)
-  syncInputValue(plainInputRefs['quote.quotedPriceTax'], quoteView.value.quotedPriceTax)
-  syncInputValue(plainInputRefs['quote.salesRevenue'], quoteView.value.salesRevenue)
-  syncInputValue(plainInputRefs['quote.rebateRate'], quoteView.value.rebateRate)
-  syncInputValue(plainInputRefs['quote.accountPeriodDays'], quoteView.value.accountPeriodDays)
-  syncInputValue(plainInputRefs['quote.freightAmount'], quoteView.value.freightAmount)
+  const quoteInputs = Array.from(root.querySelectorAll('.quote-grid input'))
+  const quoteValues = [
+    quoteView.value.taxRate,
+    quoteView.value.quotedPriceTax,
+    quoteView.value.salesRevenue,
+    quoteView.value.rebateRate,
+    quoteView.value.accountPeriodDays,
+    quoteView.value.freightAmount
+  ]
+  quoteValues.forEach((value, index) => {
+    syncInputValue(quoteInputs[index], value)
+  })
 
-  syncTextValue(textRefs['summary.materialAmount'], summaryView.value.materialAmount)
-  syncTextValue(textRefs['summary.materialRatio'], summaryView.value.materialRatio)
-  syncTextValue(textRefs['summary.laborAmount'], summaryView.value.laborAmount)
-  syncTextValue(textRefs['summary.laborRatio'], summaryView.value.laborRatio)
-  syncTextValue(textRefs['summary.expenseAmount'], summaryView.value.expenseAmount)
-  syncTextValue(textRefs['summary.expenseRatio'], summaryView.value.expenseRatio)
-  syncTextValue(textRefs['summary.totalCost'], summaryView.value.totalCost)
+  const summaryAmounts = Array.from(root.querySelectorAll('.summary-cards .summary-card .amount'))
+  const summaryRatios = Array.from(root.querySelectorAll('.summary-cards .summary-card .ratio'))
+  const summaryAmountValues = [
+    summaryView.value.materialAmount,
+    summaryView.value.laborAmount,
+    summaryView.value.expenseAmount,
+    summaryView.value.totalCost
+  ]
+  const summaryRatioValues = [
+    summaryView.value.materialRatio,
+    summaryView.value.laborRatio,
+    summaryView.value.expenseRatio
+  ]
+  summaryAmountValues.forEach((value, index) => {
+    syncTextValue(summaryAmounts[index], value)
+  })
+  summaryRatioValues.forEach((value, index) => {
+    syncTextValue(summaryRatios[index], value)
+  })
 
-  syncTextValue(textRefs['profit.contributionAmount'], profitView.value.contributionAmount)
-  syncTextValue(textRefs['profit.contributionRate'], profitView.value.contributionRate)
-  syncTextValue(textRefs['profit.grossProfitAmount'], profitView.value.grossProfitAmount)
-  syncTextValue(textRefs['profit.grossProfitRate'], profitView.value.grossProfitRate)
-  syncTextValue(textRefs['profit.pretaxProfitAmount'], profitView.value.pretaxProfitAmount)
-  syncTextValue(textRefs['profit.pretaxProfitRate'], profitView.value.pretaxProfitRate)
-  syncTextValue(textRefs['profit.incomeTaxAmount'], profitView.value.incomeTaxAmount)
-  syncTextValue(textRefs['profit.incomeTaxRate'], profitView.value.incomeTaxRate)
-  syncTextValue(textRefs['profit.netProfitAmount'], profitView.value.netProfitAmount)
-  syncTextValue(textRefs['profit.netProfitRate'], profitView.value.netProfitRate)
+  const profitAmounts = Array.from(root.querySelectorAll('.profit-card b'))
+  const profitRatios = Array.from(root.querySelectorAll('.profit-card em'))
+  const profitAmountValues = [
+    profitView.value.contributionAmount,
+    profitView.value.grossProfitAmount,
+    profitView.value.pretaxProfitAmount,
+    profitView.value.incomeTaxAmount,
+    profitView.value.netProfitAmount
+  ]
+  const profitRatioValues = [
+    profitView.value.contributionRate,
+    profitView.value.grossProfitRate,
+    profitView.value.pretaxProfitRate,
+    profitView.value.incomeTaxRate,
+    profitView.value.netProfitRate
+  ]
+  profitAmountValues.forEach((value, index) => {
+    syncTextValue(profitAmounts[index], value)
+  })
+  profitRatioValues.forEach((value, index) => {
+    syncTextValue(profitRatios[index], value)
+  })
 
-  syncTextValue(textRefs['ratio.materialLabel'], `材料 ${summaryView.value.materialAmount}`)
-  syncTextValue(textRefs['ratio.materialRatio'], ratioChartView.value.materialRatio)
-  syncTextValue(textRefs['ratio.laborLabel'], `人工 ${summaryView.value.laborAmount}`)
-  syncTextValue(textRefs['ratio.laborRatio'], ratioChartView.value.laborRatio)
-  syncTextValue(textRefs['ratio.expenseLabel'], `费用 ${summaryView.value.expenseAmount}`)
-  syncTextValue(textRefs['ratio.expenseRatio'], ratioChartView.value.expenseRatio)
+  const legendSpans = Array.from(root.querySelectorAll('.ratio-panel .legend span'))
+  const legendBolds = Array.from(root.querySelectorAll('.ratio-panel .legend b'))
+  const legendSpanValues = [
+    `材料 ${summaryView.value.materialAmount}`,
+    `人工 ${summaryView.value.laborAmount}`,
+    `费用 ${summaryView.value.expenseAmount}`
+  ]
+  const legendBoldValues = [
+    ratioChartView.value.materialRatio,
+    ratioChartView.value.laborRatio,
+    ratioChartView.value.expenseRatio
+  ]
+  legendSpanValues.forEach((value, index) => {
+    syncTextValue(legendSpans[index], value)
+  })
+  legendBoldValues.forEach((value, index) => {
+    syncTextValue(legendBolds[index], value)
+  })
 
   syncTableValues('.material-table', materialRows.value, materialVisibleColumns.value)
   syncTableValues('.labor-table', laborRows.value, laborVisibleColumns.value)
