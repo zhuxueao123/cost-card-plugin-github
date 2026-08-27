@@ -1,5 +1,10 @@
-# Node / build cache
-node_modules/
+# frontend deps/build cache
+frontend/node_modules/
+frontend/.generated/
+
+# Python cache
+**/__pycache__/
+**/*.pyc
 
 # IDE
 .vscode/

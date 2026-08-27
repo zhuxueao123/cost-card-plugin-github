@@ -1,35 +1,46 @@
-# 电子成本卡报表插件（Demo）
+# Plugins Workspace
 
-本仓库用于客户演示：
-- 业务 CRUD 走标准场景菜单（电子成本卡）
-- 报表展示走自定义页面菜单（电子成本卡报表）
+这个目录预期会单独开放给客户维护，并可独立作为一个 Git 仓库使用。
 
-## 目录结构
+## 目录约定
 
-- frontend/src/pages/cost_card_portal/
-  - manifest.json
-  - cost-card-report.vue
-- frontend/dist/manifests/cost_card_portal.json
-- frontend/dist/cost_card_portal/cost-card-report.js
-- frontend/dist/assets/cost-card-report-Bv8iLtDC.css
+```text
+plugins/
+  backend/                # 实际会被 Runtime 加载的后端插件
+  frontend/               # 实际会被宿主前端构建/加载的前端插件工程
+  locales/                # 客户统一维护的平台/插件语言资源目录
+  docs/                   # 面向客户的插件开发文档
+  examples/               # 示例代码，不会被宿主自动加载
+```
 
-## 菜单建议
+说明：
+- `backend/` 与 `frontend/` 是正式插件目录。
+- `locales/` 是统一语言资源目录，平台前端、前端插件、后端插件共用这一套外置语言包。
+- `docs/` 用于说明插件清单、系统能力、标准 API、开发约束。
+- `examples/` 仅作为参考模板，客户可复制到 `backend/` 或 `frontend/src/pages/` 后再改造成正式插件。
 
-- 场景菜单：`electronic-cost-card`，label=`电子成本卡`
-- 自定义菜单：`electronic-cost-card-report`，label=`电子成本卡报表`，customRoute=`/plugins/cost-card/report`
+## 交付建议
 
-## 服务器上传路径（示例）
+如果客户要单独维护插件仓库，建议至少保留以下内容：
+- `backend/`
+- `frontend/`
+- `locales/`
+- `docs/`
+- `examples/`
 
-将 dist 产物上传到宿主约定目录：
+## 快速开始
 
-- `/plugins/frontend/dist/manifests/cost_card_portal.json`
-- `/plugins/frontend/dist/cost_card_portal/cost-card-report.js`
-- `/plugins/frontend/dist/assets/cost-card-report-Bv8iLtDC.css`
+1. 阅读 [docs/overview.md](/Users/mac4/Workspace/AsapFlow/plugins/docs/overview.md) 了解整体结构。
+2. 阅读 [docs/backend-plugin-guide.md](/Users/mac4/Workspace/AsapFlow/plugins/docs/backend-plugin-guide.md) 开发 Python Runtime 插件。
+3. 阅读 [docs/frontend-plugin-guide.md](/Users/mac4/Workspace/AsapFlow/plugins/docs/frontend-plugin-guide.md) 开发前端页面插件。
+4. 阅读 [docs/core-sdk-reference.md](/Users/mac4/Workspace/AsapFlow/plugins/docs/core-sdk-reference.md) 查看后端插件可调用的标准能力。
+5. 阅读 [docs/plugin-i18n-guide.md](/Users/mac4/Workspace/AsapFlow/plugins/docs/plugin-i18n-guide.md) 了解统一语言资源目录与多语言约定。
+6. 从 [examples/backend/supplier_guard](/Users/mac4/Workspace/AsapFlow/plugins/examples/backend/supplier_guard) 或 [examples/frontend/supplier_portal](/Users/mac4/Workspace/AsapFlow/plugins/examples/frontend/supplier_portal) 复制模板开始。
 
-上传后重载插件资源（按你们环境的 reload 流程执行）。
+## 重要约束
 
-## 说明
-
-- 本 demo 不包含自动计算插件。
-- 数据由标准功能场景做 CRUD。
-- 报表页面使用静态样例数据，主要用于展示效果。
+- 后端插件不能执行原生 SQL。
+- 后端插件如需数据库侧逻辑，请调用存储过程/函数。
+- `examples/` 下的代码不会被宿主自动发现或加载。
+- `locales/` 是客户主要维护的语言资源目录；平台前端源码内置语言包仅作为 fallback。
+- 正式启用插件前，请将示例目录复制到正式目录并修改编码、名称、权限、版本等信息。
