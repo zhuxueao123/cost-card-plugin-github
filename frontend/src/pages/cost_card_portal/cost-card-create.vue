@@ -39,6 +39,7 @@ const hostDataApi = useHostDataApi()
 const MAIN_ENTITY_CODE = 'cost_card'
 const DEBUG_PREFIX = '[cost-card-create]'
 const REQUEST_TIMEOUT_MS = 8000
+const LOAD_GUARD_MS = 10000
 
 function debugLog(stage, payload) {
   console.info(`${DEBUG_PREFIX} ${stage}`, payload)
@@ -65,6 +66,7 @@ const loadedData = ref(null)
 const isLoading = ref(false)
 const lastLoadError = ref('')
 const formRenderVersion = ref(0)
+const activeLoadToken = ref('')
 const formRenderKey = computed(() => `${currentRecordId.value || 'new'}:${formRenderVersion.value}`)
 const shouldWaitForData = computed(() => !!currentRecordId.value && isLoading.value)
 const currentRecordId = computed(() => {
@@ -391,9 +393,26 @@ async function loadDetailRowsByCardNo(cardNo, entityCode) {
 
 async function loadById(recordId) {
   if (!recordId) return
+  const loadToken = `${recordId}:${Date.now()}`
+  activeLoadToken.value = loadToken
   debugLog('loadById:start', { recordId })
   isLoading.value = true
   lastLoadError.value = ''
+  const guard = setTimeout(() => {
+    if (activeLoadToken.value !== loadToken) return
+    isLoading.value = false
+    if (!lastLoadError.value) {
+      lastLoadError.value = `load timeout after ${LOAD_GUARD_MS}ms`
+    }
+    loadedData.value = loadedData.value || {
+      product: {},
+      materialRows: [],
+      laborRows: [],
+      expenseRows: []
+    }
+    if (formRenderVersion.value === 0) formRenderVersion.value = 1
+    debugLog('loadById:guard-timeout', { recordId, loadToken })
+  }, LOAD_GUARD_MS)
   try {
     const mainRecord = await loadMainRecord(recordId)
     if (!mainRecord) {
@@ -503,7 +522,11 @@ async function loadById(recordId) {
     debugLog('loadById:error', { recordId, error: lastLoadError.value })
   }
   finally {
-    isLoading.value = false
+    clearTimeout(guard)
+    if (activeLoadToken.value === loadToken) {
+      isLoading.value = false
+      activeLoadToken.value = ''
+    }
   }
 }
 
