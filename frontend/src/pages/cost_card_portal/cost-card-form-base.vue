@@ -200,7 +200,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch, watchEffect } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 
 const FORM_BASE_BUILD_TAG = '2026-08-28T01:05+08:00'
 console.info('[cost-card-form-base] build-tag', FORM_BASE_BUILD_TAG)
@@ -215,6 +215,7 @@ const props = defineProps({
   columnEditable: { type: Object, required: true },
   columnVisibility: { type: Object, default: () => ({}) },
   initialData: { type: Object, default: null },
+  initialDataJson: { type: String, default: '' },
   initialVersion: { type: Number, default: 0 }
 })
 
@@ -479,20 +480,47 @@ function applyInitialData(payload) {
   })
 }
 
-watchEffect(() => {
+function parseInitialPayload() {
+  if (props.initialDataJson) {
+    try {
+      const parsed = JSON.parse(props.initialDataJson)
+      console.info('[cost-card-form-base] parseInitialPayload:json', {
+        hasValue: !!parsed,
+        valueType: typeof parsed
+      })
+      return parsed
+    }
+    catch (error) {
+      console.info('[cost-card-form-base] parseInitialPayload:json-error', {
+        error: error instanceof Error ? error.message : String(error)
+      })
+    }
+  }
+
   const value = props.initialData
-  console.info('[cost-card-form-base] watchEffect:initialData', {
+  console.info('[cost-card-form-base] parseInitialPayload:fallback', {
     hasValue: !!value,
     valueType: typeof value
   })
-  applyInitialData(value)
-})
+  return value
+}
+
+watch(
+  () => props.initialDataJson,
+  (value) => {
+    console.info('[cost-card-form-base] watch:initialDataJson', {
+      length: value?.length || 0
+    })
+    applyInitialData(parseInitialPayload())
+  },
+  { immediate: true }
+)
 
 watch(
   () => props.initialVersion,
   (version) => {
     console.info('[cost-card-form-base] watch:initialVersion', { version })
-    applyInitialData(props.initialData)
+    applyInitialData(parseInitialPayload())
   },
   { immediate: true }
 )

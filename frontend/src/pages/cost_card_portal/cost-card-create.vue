@@ -15,6 +15,7 @@
     v-if="shouldRenderForm"
     :key="formRenderKey"
     :initial-version="formRenderVersion"
+    :initial-data-json="serializedInitialData"
     scene-code="cc_create"
     :scene-title="runtimeSceneTitle"
     :product-editable="configState.productEditable"
@@ -75,6 +76,12 @@ const activeLoadToken = ref('')
 const shouldRenderForm = ref(true)
 const formRenderKey = computed(() => `${currentRecordId.value || 'new'}:${formRenderVersion.value}`)
 const showLoadingMask = computed(() => !!currentRecordId.value && isLoading.value && formRenderVersion.value === 0)
+const serializedInitialData = computed(() => JSON.stringify(loadedData.value || {
+  product: {},
+  materialRows: [],
+  laborRows: [],
+  expenseRows: []
+}))
 const currentRecordId = computed(() => {
   const routeQuery = pluginContext.query.value || {}
   const candidates = [
