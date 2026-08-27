@@ -33,7 +33,8 @@ const currentRecordId = computed(() => {
     routeQuery.rowId,
     routeQuery.pk,
     routeQuery.key,
-    routeQuery.card_no
+    routeQuery.card_no,
+    routeQuery.cardNo
   ]
   for (const value of candidates) {
     if (value !== undefined && value !== null && String(value).trim() !== '') {
@@ -63,6 +64,12 @@ function normalizeJsonPayload(payload) {
   if (payload.data && typeof payload.data === 'object') return payload.data
   if (payload.payload && typeof payload.payload === 'object') return payload.payload
   return payload
+}
+
+function extractRowsFromPayload(payload) {
+  const normalized = normalizeJsonPayload(payload)
+  const rows = normalized?.records || normalized?.items || normalized?.rows || normalized?.data
+  return Array.isArray(rows) ? rows : []
 }
 
 function normalizeRecord(record) {
@@ -146,12 +153,54 @@ async function loadMainRecordByHostApi(recordId) {
     payload = await hostDataApi.getRecord(MAIN_ENTITY_CODE, recordId)
   }
   catch (_error) {
-    return null
+    payload = null
   }
 
   const normalized = normalizeJsonPayload(payload)
   if (normalized && (normalized.record || normalized.model || normalized.id || normalized.product_code)) {
-    return normalized.record || normalized.model || normalized
+    const candidate = normalized.record || normalized.model || normalized
+    const unwrapped = unwrapRecordData(candidate)
+    if (unwrapped.product_code || unwrapped.product_name || unwrapped.card_no || unwrapped.cardNo) {
+      return candidate
+    }
+  }
+
+  const queryBodies = [
+    {
+      filters: { id: recordId },
+      pageIndex: 0,
+      pageSize: 1
+    },
+    {
+      filters: [{ field: 'id', operator: 'eq', value: recordId }],
+      pageIndex: 0,
+      pageSize: 1
+    },
+    {
+      filters: { card_no: recordId },
+      pageIndex: 0,
+      pageSize: 1
+    },
+    {
+      filters: [{ field: 'card_no', operator: 'eq', value: recordId }],
+      pageIndex: 0,
+      pageSize: 1
+    }
+  ]
+
+  for (const body of queryBodies) {
+    let queryPayload = null
+    try {
+      queryPayload = await hostDataApi.queryRecords(MAIN_ENTITY_CODE, body)
+    }
+    catch (_error) {
+      continue
+    }
+
+    const rows = extractRowsFromPayload(queryPayload)
+    if (!rows.length) continue
+    const first = rows[0]
+    if (first && typeof first === 'object') return first
   }
 
   return null
@@ -165,9 +214,18 @@ function normalizeDetailRow(row, section) {
   if (!row || typeof row !== 'object') return row
   const normalizedRow = unwrapRecordData(row)
   const pick = (keys) => pickFirstObject(normalizedRow, keys)
+  const normalizeLineNo = (fallback) => {
+    const raw = pick(['line_no', 'lineNo', 'row_no', 'rowNo'])
+    if (raw !== undefined && raw !== null && String(raw).trim() !== '') {
+      const asNumber = Number(raw)
+      return Number.isFinite(asNumber) ? asNumber : raw
+    }
+    return fallback
+  }
 
   if (section === 'material') {
     return {
+      line_no: normalizeLineNo(''),
       item_name: pick(['item_name', 'itemName', 'material_name', 'name']) || '',
       item_code: pick(['item_code', 'itemCode', 'material_code', 'code']) || '',
       spec: pick(['spec', 'specification']) || '',
@@ -182,6 +240,7 @@ function normalizeDetailRow(row, section) {
 
   if (section === 'labor') {
     return {
+      line_no: normalizeLineNo(''),
       process_name: pick(['process_name', 'processName', 'process']) || '',
       work_minutes: pick(['work_minutes', 'workMinutes', 'minutes']) || '',
       worker_count: pick(['worker_count', 'workerCount', 'workers']) || '',
@@ -193,6 +252,7 @@ function normalizeDetailRow(row, section) {
   }
 
   return {
+    line_no: normalizeLineNo(''),
     expense_type: pick(['expense_type', 'expenseType', 'type']) || '',
     detail_name: pick(['detail_name', 'detailName', 'name']) || '',
     amount: pick(['amount', 'line_amount', 'subtotal']) || '',
@@ -252,13 +312,25 @@ async function loadById(recordId) {
   loadedData.value = {
     product: normalizeRecord(normalizedMain),
     materialRows: Array.isArray(materialRows)
-      ? materialRows.map((row) => normalizeDetailRow(row, 'material'))
+      ? materialRows.map((row, index) => {
+        const normalized = normalizeDetailRow(row, 'material')
+        if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
+        return normalized
+      })
       : undefined,
     laborRows: Array.isArray(laborRows)
-      ? laborRows.map((row) => normalizeDetailRow(row, 'labor'))
+      ? laborRows.map((row, index) => {
+        const normalized = normalizeDetailRow(row, 'labor')
+        if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
+        return normalized
+      })
       : undefined,
     expenseRows: Array.isArray(expenseRows)
-      ? expenseRows.map((row) => normalizeDetailRow(row, 'expense'))
+      ? expenseRows.map((row, index) => {
+        const normalized = normalizeDetailRow(row, 'expense')
+        if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
+        return normalized
+      })
       : undefined
   }
 }

@@ -48,6 +48,7 @@
 
 - [backend-plugin-guide.md](/Users/mac4/Workspace/AsapFlow/plugins/docs/backend-plugin-guide.md)
 - [frontend-plugin-guide.md](/Users/mac4/Workspace/AsapFlow/plugins/docs/frontend-plugin-guide.md)
+- [platform-capabilities-guide.md](/Users/mac4/Workspace/AsapFlow/plugins/docs/platform-capabilities-guide.md)
 - [core-sdk-reference.md](/Users/mac4/Workspace/AsapFlow/plugins/docs/core-sdk-reference.md)
 - [plugin-i18n-guide.md](/Users/mac4/Workspace/AsapFlow/plugins/docs/plugin-i18n-guide.md)
 - [plugin-ui-protocol.md](/Users/mac4/Workspace/AsapFlow/plugins/docs/plugin-ui-protocol.md)

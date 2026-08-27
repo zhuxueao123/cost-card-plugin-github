@@ -241,5 +241,36 @@ npm install @trusteem/asapflow-plugin-sdk
   2. 再改插件页面代码
   3. 最后再跑构建验证
 
+## 8. 系统字典与编号规则的前端边界
+
+- 系统字典和编号规则属于平台标准能力，AI 在做前端插件方案时，不要默认它们需要插件自己实现。
+
+- 字段如果是有限枚举值，例如 `status`、`type`、`category`、`level`、`priority`，优先让平台字段配置引用系统字典：
+  - `optionSourceType = "dictionary"`
+  - `optionSource.dictionaryCode = "<dictionary-code>"`
+
+- 前端插件不要把这类选项长期硬编码在页面里，除非是一次性临时演示数据。
+
+- 如果插件页需要显示系统字典值，应优先复用宿主已有字段配置或宿主接口返回值；不要在插件里复制一套状态映射表并长期维护。
+
+- 业务编号、单据号、编码规则应优先使用平台编号规则，不要在插件前端手工拼接。
+
+- AI 设计或修改业务功能时，遇到“自动生成编号”的需求，固定顺序应为：
+  1. 先检查是否已有可复用的 `number-rule`
+  2. 没有则新增 `number-rule`
+  3. 再把规则绑定到实体字段 `metadata.generator.ruleCode`
+  4. 最后再确认表单是否展示该字段
+
+- 插件页如果只是读取记录，不应自己重新生成编号。
+
+- 插件页如果负责新增/编辑数据，也不应在前端补造业务编号后再提交，除非需求明确要求绕开平台编号引擎。
+
+- 当标准表单保存返回类似 `Field '<field>' requires a value when no default is provided.` 时，AI 应优先排查：
+  1. 是否有必填字段未提交
+  2. 是否把本应由编号规则生成的字段当成普通字段处理了
+  3. 是否把系统行号/排序号字段隐藏后又未提供默认值
+
+- 若标准功能已经可以通过系统字典或编号规则配置解决，不要优先建议“再写一个插件页面来规避”。
+
 - UI 控制协议见 [plugin-ui-protocol.md](/Users/mac4/Workspace/AsapFlow/plugins/docs/plugin-ui-protocol.md)
 - 完整联调链路见 [plugin-e2e-examples.md](/Users/mac4/Workspace/AsapFlow/plugins/docs/plugin-e2e-examples.md)
