@@ -1,10 +1,10 @@
 <template>
-  <section v-if="shouldWaitForData" class="cost-card-loading">
+  <section v-if="showLoadingMask" class="cost-card-loading">
     正在加载成本卡数据...
   </section>
   <section class="cost-card-debug" v-if="currentRecordId">
     <span>debug</span>
-    <span>wait={{ shouldWaitForData ? 'Y' : 'N' }}</span>
+    <span>wait={{ showLoadingMask ? 'Y' : 'N' }}</span>
     <span>loading={{ isLoading ? 'Y' : 'N' }}</span>
     <span>ver={{ formRenderVersion }}</span>
     <span>code={{ loadedData?.product?.product_code || '-' }}</span>
@@ -12,7 +12,6 @@
     <span v-if="lastLoadError">err={{ lastLoadError }}</span>
   </section>
   <CostCardFormBase
-    v-if="!shouldWaitForData"
     :key="formRenderKey"
     :initial-version="formRenderVersion"
     scene-code="cc_create"
@@ -62,13 +61,18 @@ function withTimeout(promise, label, timeoutMs = REQUEST_TIMEOUT_MS) {
   })
 }
 
-const loadedData = ref(null)
+const loadedData = ref({
+  product: {},
+  materialRows: [],
+  laborRows: [],
+  expenseRows: []
+})
 const isLoading = ref(false)
 const lastLoadError = ref('')
 const formRenderVersion = ref(0)
 const activeLoadToken = ref('')
 const formRenderKey = computed(() => `${currentRecordId.value || 'new'}:${formRenderVersion.value}`)
-const shouldWaitForData = computed(() => !!currentRecordId.value && isLoading.value && !loadedData.value)
+const showLoadingMask = computed(() => !!currentRecordId.value && isLoading.value && formRenderVersion.value === 0)
 const currentRecordId = computed(() => {
   const routeQuery = pluginContext.query.value || {}
   const candidates = [
@@ -471,21 +475,21 @@ async function loadById(recordId) {
           if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
           return normalized
         })
-        : undefined,
+        : [],
       laborRows: Array.isArray(laborRows)
         ? laborRows.map((row, index) => {
           const normalized = normalizeDetailRow(row, 'labor')
           if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
           return normalized
         })
-        : undefined,
+        : [],
       expenseRows: Array.isArray(expenseRows)
         ? expenseRows.map((row, index) => {
           const normalized = normalizeDetailRow(row, 'expense')
           if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
           return normalized
         })
-        : undefined
+        : []
     }
     formRenderVersion.value += 1
     const productSnapshot = loadedData.value?.product && typeof loadedData.value.product === 'object'
@@ -539,7 +543,12 @@ watch(
   async (recordId) => {
     debugLog('watch:currentRecordId', { recordId })
     if (!recordId) {
-      loadedData.value = null
+      loadedData.value = {
+        product: {},
+        materialRows: [],
+        laborRows: [],
+        expenseRows: []
+      }
       isLoading.value = false
       lastLoadError.value = ''
       formRenderVersion.value += 1

@@ -429,7 +429,10 @@ function applyProductData(productData) {
 }
 
 function applyRowsData(targetRowsRef, rowsData) {
-  if (!Array.isArray(rowsData) || rowsData.length === 0) return
+  if (!Array.isArray(rowsData)) {
+    targetRowsRef.value = []
+    return
+  }
   targetRowsRef.value = rowsData.map((row) => ({ ...row }))
 }
 
@@ -446,8 +449,10 @@ function resetFormData() {
 function applyInitialData(payload) {
   if (!payload || typeof payload !== 'object') {
     console.info('[cost-card-form-base] applyInitialData:skip', { reason: 'payload-empty' })
+    resetFormData()
     return
   }
+  resetFormData()
   console.info('[cost-card-form-base] applyInitialData', {
     hasProduct: !!(payload.product || payload.model),
     materialCount: Array.isArray(payload.materialRows || payload.material || payload.material_items)
