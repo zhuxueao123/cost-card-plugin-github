@@ -8,203 +8,161 @@
 
     <section class="block">
       <h2>产品信息</h2>
-      <div class="top-layout">
-        <div class="grid product-grid">
-          <label v-for="f in visibleProductFields" :key="f.key" class="field">
-            <span>{{ f.label }}</span>
-            <input v-model="product[f.key]" :readonly="!productEditable" />
-          </label>
-        </div>
-        <div class="summary-cards">
-          <article class="summary-card sc-blue">
-            <div class="title">材料成本</div>
-            <div class="amount">{{ summaryView.materialAmount }}</div>
-            <div class="ratio">{{ summaryView.materialRatio }}</div>
-          </article>
-          <article class="summary-card sc-green">
-            <div class="title">人工成本</div>
-            <div class="amount">{{ summaryView.laborAmount }}</div>
-            <div class="ratio">{{ summaryView.laborRatio }}</div>
-          </article>
-          <article class="summary-card sc-orange">
-            <div class="title">费用成本</div>
-            <div class="amount">{{ summaryView.expenseAmount }}</div>
-            <div class="ratio">{{ summaryView.expenseRatio }}</div>
-          </article>
-          <article class="summary-card sc-total">
-            <div class="title">总成本</div>
-            <div class="amount">{{ summaryView.totalCost }}</div>
-          </article>
-        </div>
+      <div class="product-grid">
+        <label v-for="field in visibleProductFields" :key="field.key" class="field">
+          <span>{{ field.label }}</span>
+          <input
+            :value="product[field.key]"
+            :readonly="!productEditable"
+            @input="updateProductField(field.key, $event.target.value)"
+          />
+        </label>
+      </div>
+      <div class="summary-grid">
+        <article class="summary-card">
+          <div class="title">材料成本</div>
+          <div class="amount">{{ summaryView.materialAmount }}</div>
+        </article>
+        <article class="summary-card">
+          <div class="title">人工成本</div>
+          <div class="amount">{{ summaryView.laborAmount }}</div>
+        </article>
+        <article class="summary-card">
+          <div class="title">费用成本</div>
+          <div class="amount">{{ summaryView.expenseAmount }}</div>
+        </article>
+        <article class="summary-card">
+          <div class="title">总成本</div>
+          <div class="amount">{{ summaryView.totalCost }}</div>
+        </article>
       </div>
     </section>
 
     <section class="block">
       <h2>产品报价与汇总</h2>
-      <div class="quote-layout">
-        <div class="left-panels">
-          <div class="inner-panel">
-            <h3>销售报价</h3>
-            <div class="grid quote-grid">
-              <label class="field"><span>税率</span><input :value="quoteView.taxRate" readonly /></label>
-              <label class="field"><span>销售含税报价</span><input :value="quoteView.quotedPriceTax" readonly /></label>
-              <label class="field"><span>销售收入</span><input :value="quoteView.salesRevenue" readonly /></label>
-              <label class="field"><span>票前扣点与返利</span><input :value="quoteView.rebateRate" readonly /></label>
-              <label class="field"><span>账期</span><input :value="quoteView.accountPeriodDays" readonly /></label>
-              <label class="field"><span>运费</span><input :value="quoteView.freightAmount" readonly /></label>
-            </div>
-          </div>
-          <div class="inner-panel">
-            <h3>利润</h3>
-            <div class="profit-cards">
-              <article class="profit-card pc-blue"><span>边际贡献</span><b>{{ profitView.contributionAmount }}</b><em>{{ profitView.contributionRate }}</em></article>
-              <article class="profit-card pc-green"><span>毛利额</span><b>{{ profitView.grossProfitAmount }}</b><em>{{ profitView.grossProfitRate }}</em></article>
-              <article class="profit-card pc-orange"><span>税前利润</span><b>{{ profitView.pretaxProfitAmount }}</b><em>{{ profitView.pretaxProfitRate }}</em></article>
-              <article class="profit-card pc-dark"><span>所得税</span><b>{{ profitView.incomeTaxAmount }}</b><em>{{ profitView.incomeTaxRate }}</em></article>
-              <article class="profit-card pc-main"><span>净利润</span><b>{{ profitView.netProfitAmount }}</b><em>{{ profitView.netProfitRate }}</em></article>
-            </div>
-          </div>
-        </div>
-        <aside class="inner-panel ratio-panel">
-          <h3>成本占比</h3>
-          <div class="ratio-wrap">
-            <div class="ratio-ring" :style="ratioRingStyle"></div>
-            <ul class="legend">
-              <li><i class="c1"></i><span>材料 {{ summaryView.materialAmount }}</span><b>{{ ratioChartView.materialRatio }}</b></li>
-              <li><i class="c3"></i><span>人工 {{ summaryView.laborAmount }}</span><b>{{ ratioChartView.laborRatio }}</b></li>
-              <li><i class="c2"></i><span>费用 {{ summaryView.expenseAmount }}</span><b>{{ ratioChartView.expenseRatio }}</b></li>
-            </ul>
-          </div>
-        </aside>
+      <div class="quote-grid">
+        <label class="field"><span>税率</span><input :value="quoteView.taxRate" readonly /></label>
+        <label class="field"><span>销售含税报价</span><input :value="quoteView.quotedPriceTax" readonly /></label>
+        <label class="field"><span>销售收入</span><input :value="quoteView.salesRevenue" readonly /></label>
+        <label class="field"><span>票前扣点与返利</span><input :value="quoteView.rebateRate" readonly /></label>
+        <label class="field"><span>账期</span><input :value="quoteView.accountPeriodDays" readonly /></label>
+        <label class="field"><span>运费</span><input :value="quoteView.freightAmount" readonly /></label>
+      </div>
+      <div class="summary-grid">
+        <article class="summary-card">
+          <div class="title">边际贡献</div>
+          <div class="amount">{{ profitView.contributionAmount }}</div>
+        </article>
+        <article class="summary-card">
+          <div class="title">毛利额</div>
+          <div class="amount">{{ profitView.grossProfitAmount }}</div>
+        </article>
+        <article class="summary-card">
+          <div class="title">税前利润</div>
+          <div class="amount">{{ profitView.pretaxProfitAmount }}</div>
+        </article>
+        <article class="summary-card">
+          <div class="title">所得税</div>
+          <div class="amount">{{ profitView.incomeTaxAmount }}</div>
+        </article>
+        <article class="summary-card">
+          <div class="title">净利润</div>
+          <div class="amount">{{ profitView.netProfitAmount }}</div>
+        </article>
       </div>
     </section>
 
-    <section class="block" v-if="isSectionVisible('material')">
+    <section v-if="isSectionVisible('material')" class="block">
       <div class="section-head">
         <h2>材料成本</h2>
-        <span class="tag-blue">{{ summaryView.materialAmount }}</span>
+        <span>{{ materialRows.length }} 行</span>
       </div>
-      <div class="split-layout">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th v-for="c in materialVisibleColumns" :key="c.key">{{ c.label }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(row, idx) in materialRows" :key="'m-' + idx" :class="{ alt: idx % 2 === 1 }">
-                <td v-for="c in materialVisibleColumns" :key="c.key">
-                  <input
-                    v-model="row[c.key]"
-                    :readonly="!isCellEditable('material', c.key)"
-                    :class="{ readonly: !isCellEditable('material', c.key) }"
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <aside class="side-panel">
-          <h3>材料构成</h3>
-          <div class="mini-ring material-ring"></div>
-          <ul class="legend compact">
-            <li><i class="c2"></i><span>包材 ¥3.89</span><b>47.5%</b></li>
-            <li><i class="c1"></i><span>蔬果 ¥2.22</span><b>27.1%</b></li>
-            <li><i class="c3"></i><span>调味料 ¥2.08</span><b>25.4%</b></li>
-          </ul>
-        </aside>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th v-for="column in materialVisibleColumns" :key="column.key">{{ column.label }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, rowIndex) in materialRows" :key="`m-${rowIndex}`">
+              <td v-for="column in materialVisibleColumns" :key="column.key">
+                <input
+                  :value="row[column.key]"
+                  :readonly="!isCellEditable('material', column.key)"
+                  @input="updateRowField('material', rowIndex, column.key, $event.target.value)"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
-    <section class="block" v-if="isSectionVisible('labor')">
+    <section v-if="isSectionVisible('labor')" class="block">
       <div class="section-head">
         <h2>人工成本</h2>
-        <span class="tag-green">{{ summaryView.laborAmount }}</span>
+        <span>{{ laborRows.length }} 行</span>
       </div>
-      <div class="split-layout">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th v-for="c in laborVisibleColumns" :key="c.key">{{ c.label }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(row, idx) in laborRows" :key="'l-' + idx" :class="{ alt: idx % 2 === 1 }">
-                <td v-for="c in laborVisibleColumns" :key="c.key">
-                  <input
-                    v-model="row[c.key]"
-                    :readonly="!isCellEditable('labor', c.key)"
-                    :class="{ readonly: !isCellEditable('labor', c.key) }"
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <aside class="side-panel">
-          <h3>工序成本</h3>
-          <div class="bar-list">
-            <div class="bar-item"><label>清洗</label><span style="width:72.2%"></span><b>¥6.17</b></div>
-            <div class="bar-item"><label>切割</label><span style="width:100%"></span><b>¥8.55</b></div>
-            <div class="bar-item"><label>调配</label><span style="width:89.7%"></span><b>¥7.67</b></div>
-            <div class="bar-item"><label>烘烤</label><span style="width:78%"></span><b>¥6.67</b></div>
-            <div class="bar-item"><label>包装</label><span style="width:16.1%"></span><b>¥1.38</b></div>
-          </div>
-        </aside>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th v-for="column in laborVisibleColumns" :key="column.key">{{ column.label }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, rowIndex) in laborRows" :key="`l-${rowIndex}`">
+              <td v-for="column in laborVisibleColumns" :key="column.key">
+                <input
+                  :value="row[column.key]"
+                  :readonly="!isCellEditable('labor', column.key)"
+                  @input="updateRowField('labor', rowIndex, column.key, $event.target.value)"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
-    <section class="block" v-if="isSectionVisible('expense')">
+    <section v-if="isSectionVisible('expense')" class="block">
       <div class="section-head">
         <h2>费用成本</h2>
-        <span class="tag-orange">{{ summaryView.expenseAmount }}</span>
+        <span>{{ expenseRows.length }} 行</span>
       </div>
-      <div class="split-layout">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th v-for="c in expenseVisibleColumns" :key="c.key">{{ c.label }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(row, idx) in expenseRows" :key="'e-' + idx" :class="{ alt: idx % 2 === 1 }">
-                <td v-for="c in expenseVisibleColumns" :key="c.key">
-                  <input
-                    v-model="row[c.key]"
-                    :readonly="!isCellEditable('expense', c.key)"
-                    :class="{ readonly: !isCellEditable('expense', c.key) }"
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <aside class="side-panel">
-          <h3>费用构成</h3>
-          <div class="mini-ring expense-ring"></div>
-          <ul class="legend compact">
-            <li><i class="c2"></i><span>销售 ¥5.00</span><b>24.8%</b></li>
-            <li><i class="c1"></i><span>固定制造 ¥4.50</span><b>22.3%</b></li>
-            <li><i class="c3"></i><span>管理 ¥3.80</span><b>18.8%</b></li>
-            <li><i class="c4"></i><span>变动制造 ¥3.20</span><b>15.8%</b></li>
-            <li><i class="c5"></i><span>财务 ¥2.20</span><b>10.9%</b></li>
-            <li><i class="c6"></i><span>总部分摊 ¥1.50</span><b>7.4%</b></li>
-          </ul>
-        </aside>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th v-for="column in expenseVisibleColumns" :key="column.key">{{ column.label }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, rowIndex) in expenseRows" :key="`e-${rowIndex}`">
+              <td v-for="column in expenseVisibleColumns" :key="column.key">
+                <input
+                  :value="row[column.key]"
+                  :readonly="!isCellEditable('expense', column.key)"
+                  @input="updateRowField('expense', rowIndex, column.key, $event.target.value)"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
   </section>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useHostDataApi } from '@trusteem/asapflow-plugin-sdk'
 
-const FORM_BASE_BUILD_TAG = '2026-08-28T01:05+08:00'
-console.info('[cost-card-form-base] build-tag', FORM_BASE_BUILD_TAG)
+const FORM_BASE_BUILD_TAG = '2026-08-28T02:45+08:00'
+const MAIN_ENTITY_CODE = 'cost_card'
+const REQUEST_TIMEOUT_MS = 8000
+const STYLE_ID = 'cost-card-form-inline-style'
 
 const props = defineProps({
   sceneCode: { type: String, required: true },
@@ -215,17 +173,10 @@ const props = defineProps({
   sectionVisibility: { type: Object, required: true },
   sectionEditable: { type: Object, required: true },
   columnEditable: { type: Object, required: true },
-  columnVisibility: { type: Object, default: () => ({}) },
-  initialData: { type: Object, default: null },
-  initialDataJson: { type: String, default: '' },
-  initialVersion: { type: Number, default: 0 }
+  columnVisibility: { type: Object, default: () => ({}) }
 })
 
 const hostDataApi = useHostDataApi()
-const MAIN_ENTITY_CODE = 'cost_card'
-const REQUEST_TIMEOUT_MS = 8000
-
-const STYLE_ID = 'cost-card-form-inline-style'
 
 const PRODUCT_FIELDS = [
   { key: 'product_code', label: '产品编码' },
@@ -235,35 +186,6 @@ const PRODUCT_FIELDS = [
   { key: 'product_category', label: '产品类别' },
   { key: 'customer_name', label: '客户名称' }
 ]
-
-const product = reactive({
-  product_code: '',
-  version_no: '',
-  product_name: '',
-  factory: '',
-  product_category: '',
-  customer_name: '',
-  tax_rate: '',
-  quoted_price_tax: '',
-  sales_revenue: '',
-  rebate_rate: '',
-  account_period_days: '',
-  freight_amount: '',
-  material_total: '',
-  labor_total: '',
-  expense_total: '',
-  total_cost: '',
-  contribution_amount: '',
-  contribution_rate: '',
-  gross_profit_amount: '',
-  gross_profit_rate: '',
-  pretax_profit_amount: '',
-  pretax_profit_rate: '',
-  income_tax_amount: '',
-  income_tax_rate: '',
-  net_profit_amount: '',
-  net_profit_rate: ''
-})
 
 const materialColumns = [
   { key: 'item_name', label: '物料名称' },
@@ -294,27 +216,61 @@ const expenseColumns = [
   { key: 'ratio', label: '占比' }
 ]
 
+function createEmptyProduct() {
+  return {
+    product_code: '',
+    version_no: '',
+    product_name: '',
+    factory: '',
+    product_category: '',
+    customer_name: '',
+    tax_rate: '',
+    quoted_price_tax: '',
+    sales_revenue: '',
+    rebate_rate: '',
+    account_period_days: '',
+    freight_amount: '',
+    material_total: '',
+    labor_total: '',
+    expense_total: '',
+    total_cost: '',
+    contribution_amount: '',
+    contribution_rate: '',
+    gross_profit_amount: '',
+    gross_profit_rate: '',
+    pretax_profit_amount: '',
+    pretax_profit_rate: '',
+    income_tax_amount: '',
+    income_tax_rate: '',
+    net_profit_amount: '',
+    net_profit_rate: ''
+  }
+}
+
+const product = ref(createEmptyProduct())
 const materialRows = ref([])
-
 const laborRows = ref([])
-
 const expenseRows = ref([])
 
 const visibleProductFields = computed(() => {
   const visible = props.productFieldVisibility || []
   if (!visible.length || visible.includes('*')) return PRODUCT_FIELDS
-  return PRODUCT_FIELDS.filter((item) => visible.includes(item.key))
+  return PRODUCT_FIELDS.filter((field) => visible.includes(field.key))
 })
 
 function resolveVisibleColumns(section, allColumns) {
   const visible = props.columnVisibility?.[section]
   if (!Array.isArray(visible) || !visible.length || visible.includes('*')) return allColumns
-  return allColumns.filter((item) => visible.includes(item.key))
+  return allColumns.filter((field) => visible.includes(field.key))
 }
 
 const materialVisibleColumns = computed(() => resolveVisibleColumns('material', materialColumns))
 const laborVisibleColumns = computed(() => resolveVisibleColumns('labor', laborColumns))
 const expenseVisibleColumns = computed(() => resolveVisibleColumns('expense', expenseColumns))
+
+function debugLog(stage, payload) {
+  console.info(`[cost-card-form-base] ${stage}`, payload)
+}
 
 function toNumber(value) {
   if (value === undefined || value === null || value === '') return null
@@ -323,131 +279,60 @@ function toNumber(value) {
 }
 
 function formatMoney(value) {
-  const n = toNumber(value)
-  if (n === null) return ''
-  return `¥${n.toFixed(2)}`
+  const normalized = toNumber(value)
+  if (normalized === null) return ''
+  return `¥${normalized.toFixed(2)}`
 }
 
 function formatPercent(value) {
   if (value === undefined || value === null || value === '') return ''
   const raw = String(value).trim()
   if (raw.includes('%')) return raw
-  const n = Number(raw)
-  if (!Number.isFinite(n)) return raw
-  const normalized = n <= 1 ? n * 100 : n
-  return `${normalized.toFixed(2)}%`
+  const normalized = Number(raw)
+  if (!Number.isFinite(normalized)) return raw
+  return `${(normalized <= 1 ? normalized * 100 : normalized).toFixed(2)}%`
 }
 
-const summaryView = computed(() => {
-  const material = toNumber(product.material_total)
-  const labor = toNumber(product.labor_total)
-  const expense = toNumber(product.expense_total)
-  const total = toNumber(product.total_cost)
-  const safeTotal = total && total > 0 ? total : null
-
-  const materialRatio = safeTotal !== null && material !== null ? `${((material / safeTotal) * 100).toFixed(1)}%` : ''
-  const laborRatio = safeTotal !== null && labor !== null ? `${((labor / safeTotal) * 100).toFixed(1)}%` : ''
-  const expenseRatio = safeTotal !== null && expense !== null ? `${((expense / safeTotal) * 100).toFixed(1)}%` : ''
-
-  return {
-    materialAmount: formatMoney(product.material_total) || '¥0.00',
-    laborAmount: formatMoney(product.labor_total) || '¥0.00',
-    expenseAmount: formatMoney(product.expense_total) || '¥0.00',
-    totalCost: formatMoney(product.total_cost) || '¥0.00',
-    materialRatio,
-    laborRatio,
-    expenseRatio
-  }
-})
+const summaryView = computed(() => ({
+  materialAmount: formatMoney(product.value.material_total) || '¥0.00',
+  laborAmount: formatMoney(product.value.labor_total) || '¥0.00',
+  expenseAmount: formatMoney(product.value.expense_total) || '¥0.00',
+  totalCost: formatMoney(product.value.total_cost) || '¥0.00'
+}))
 
 const quoteView = computed(() => ({
-  taxRate: formatPercent(product.tax_rate),
-  quotedPriceTax: toNumber(product.quoted_price_tax) === null ? '' : Number(product.quoted_price_tax).toFixed(2),
-  salesRevenue: toNumber(product.sales_revenue) === null ? '' : Number(product.sales_revenue).toFixed(2),
-  rebateRate: formatPercent(product.rebate_rate),
-  accountPeriodDays: product.account_period_days ? `${product.account_period_days}天` : '',
-  freightAmount: toNumber(product.freight_amount) === null ? '' : Number(product.freight_amount).toFixed(2)
+  taxRate: formatPercent(product.value.tax_rate),
+  quotedPriceTax: toNumber(product.value.quoted_price_tax) === null ? '' : Number(product.value.quoted_price_tax).toFixed(2),
+  salesRevenue: toNumber(product.value.sales_revenue) === null ? '' : Number(product.value.sales_revenue).toFixed(2),
+  rebateRate: formatPercent(product.value.rebate_rate),
+  accountPeriodDays: product.value.account_period_days ? `${product.value.account_period_days}天` : '',
+  freightAmount: toNumber(product.value.freight_amount) === null ? '' : Number(product.value.freight_amount).toFixed(2)
 }))
 
 const profitView = computed(() => ({
-  contributionAmount: formatMoney(product.contribution_amount) || '¥0.00',
-  contributionRate: formatPercent(product.contribution_rate),
-  grossProfitAmount: formatMoney(product.gross_profit_amount) || '¥0.00',
-  grossProfitRate: formatPercent(product.gross_profit_rate),
-  pretaxProfitAmount: formatMoney(product.pretax_profit_amount) || '¥0.00',
-  pretaxProfitRate: formatPercent(product.pretax_profit_rate),
-  incomeTaxAmount: formatMoney(product.income_tax_amount) || '¥0.00',
-  incomeTaxRate: formatPercent(product.income_tax_rate),
-  netProfitAmount: formatMoney(product.net_profit_amount) || '¥0.00',
-  netProfitRate: formatPercent(product.net_profit_rate)
+  contributionAmount: formatMoney(product.value.contribution_amount) || '¥0.00',
+  grossProfitAmount: formatMoney(product.value.gross_profit_amount) || '¥0.00',
+  pretaxProfitAmount: formatMoney(product.value.pretax_profit_amount) || '¥0.00',
+  incomeTaxAmount: formatMoney(product.value.income_tax_amount) || '¥0.00',
+  netProfitAmount: formatMoney(product.value.net_profit_amount) || '¥0.00'
 }))
 
-const ratioChartView = computed(() => {
-  const material = Math.max(0, toNumber(product.material_total) || 0)
-  const labor = Math.max(0, toNumber(product.labor_total) || 0)
-  const expense = Math.max(0, toNumber(product.expense_total) || 0)
-  const total = Math.max(0, toNumber(product.total_cost) || material + labor + expense)
-  if (total <= 0) {
-    return {
-      material: 0,
-      labor: 0,
-      expense: 0,
-      materialRatio: '0.0%',
-      laborRatio: '0.0%',
-      expenseRatio: '0.0%'
-    }
-  }
-
-  const materialPct = (material / total) * 100
-  const laborPct = (labor / total) * 100
-  const expensePct = Math.max(0, 100 - materialPct - laborPct)
-
-  return {
-    material: materialPct,
-    labor: laborPct,
-    expense: expensePct,
-    materialRatio: `${materialPct.toFixed(1)}%`,
-    laborRatio: `${laborPct.toFixed(1)}%`,
-    expenseRatio: `${expensePct.toFixed(1)}%`
-  }
-})
-
-const ratioRingStyle = computed(() => {
-  const m = ratioChartView.value.material
-  const l = ratioChartView.value.labor
-  const e = ratioChartView.value.expense
-  const mEnd = m
-  const lEnd = m + l
-  const eEnd = m + l + e
-
-  return {
-    background: `conic-gradient(#3b82f6 0% ${mEnd.toFixed(2)}%, #10b981 ${mEnd.toFixed(2)}% ${lEnd.toFixed(2)}%, #f59e0b ${lEnd.toFixed(2)}% ${eEnd.toFixed(2)}%)`
-  }
-})
-
-function applyProductData(productData) {
-  if (!productData || typeof productData !== 'object') return
-  const keys = Object.keys(product)
-  for (const key of keys) {
-    if (key in productData && productData[key] !== undefined && productData[key] !== null) {
-      product[key] = String(productData[key])
-    }
+function updateProductField(fieldKey, value) {
+  product.value = {
+    ...product.value,
+    [fieldKey]: value
   }
 }
 
-function applyRowsData(targetRowsRef, rowsData) {
-  if (!Array.isArray(rowsData)) {
-    targetRowsRef.value = []
-    return
-  }
-  targetRowsRef.value = rowsData.map((row) => ({ ...row }))
+function updateRowField(section, rowIndex, fieldKey, value) {
+  const rowsRef = section === 'material' ? materialRows : section === 'labor' ? laborRows : expenseRows
+  rowsRef.value = rowsRef.value.map((row, index) => (
+    index === rowIndex ? { ...row, [fieldKey]: value } : row
+  ))
 }
 
 function resetFormData() {
-  const keys = Object.keys(product)
-  for (const key of keys) {
-    product[key] = ''
-  }
+  product.value = createEmptyProduct()
   materialRows.value = []
   laborRows.value = []
   expenseRows.value = []
@@ -455,46 +340,31 @@ function resetFormData() {
 
 function applyInitialData(payload) {
   if (!payload || typeof payload !== 'object') {
-    console.info('[cost-card-form-base] applyInitialData:skip', { reason: 'payload-empty' })
     resetFormData()
     return
   }
-  resetFormData()
-  console.info('[cost-card-form-base] applyInitialData', {
-    hasProduct: !!(payload.product || payload.model),
-    materialCount: Array.isArray(payload.materialRows || payload.material || payload.material_items)
-      ? (payload.materialRows || payload.material || payload.material_items).length
-      : 0,
-    laborCount: Array.isArray(payload.laborRows || payload.labor || payload.labor_items)
-      ? (payload.laborRows || payload.labor || payload.labor_items).length
-      : 0,
-    expenseCount: Array.isArray(payload.expenseRows || payload.expense || payload.expense_items)
-      ? (payload.expenseRows || payload.expense || payload.expense_items).length
-      : 0
-  })
-  applyProductData(payload.product || payload.model || {})
-  applyRowsData(materialRows, payload.materialRows || payload.material || payload.material_items)
-  applyRowsData(laborRows, payload.laborRows || payload.labor || payload.labor_items)
-  applyRowsData(expenseRows, payload.expenseRows || payload.expense || payload.expense_items)
-  console.info('[cost-card-form-base] applyInitialData:applied', {
-    product_code: product.product_code,
-    product_name: product.product_name,
-    customer_name: product.customer_name,
+
+  product.value = {
+    ...createEmptyProduct(),
+    ...(payload.product || payload.model || {})
+  }
+  materialRows.value = Array.isArray(payload.materialRows) ? payload.materialRows.map((row) => ({ ...row })) : []
+  laborRows.value = Array.isArray(payload.laborRows) ? payload.laborRows.map((row) => ({ ...row })) : []
+  expenseRows.value = Array.isArray(payload.expenseRows) ? payload.expenseRows.map((row) => ({ ...row })) : []
+
+  debugLog('applyInitialData:applied', {
+    product_code: product.value.product_code,
+    product_name: product.value.product_name,
+    customer_name: product.value.customer_name,
     materialCount: materialRows.value.length,
     laborCount: laborRows.value.length,
     expenseCount: expenseRows.value.length
   })
 }
 
-function debugLog(stage, payload) {
-  console.info(`[cost-card-form-base] ${stage}`, payload)
-}
-
 function withTimeout(promise, label, timeoutMs = REQUEST_TIMEOUT_MS) {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      reject(new Error(`${label} timeout after ${timeoutMs}ms`))
-    }, timeoutMs)
+    const timer = setTimeout(() => reject(new Error(`${label} timeout after ${timeoutMs}ms`)), timeoutMs)
     Promise.resolve(promise)
       .then((value) => {
         clearTimeout(timer)
@@ -517,15 +387,11 @@ function pickFirstObject(source, candidateKeys) {
   return null
 }
 
-function hasValue(value) {
-  return value !== undefined && value !== null && value !== ''
-}
-
 function mergeWithoutOverwritingPrimary(primary, secondary) {
   if (!secondary || typeof secondary !== 'object') return { ...primary }
   const merged = { ...primary }
   for (const [key, value] of Object.entries(secondary)) {
-    if (!Object.prototype.hasOwnProperty.call(merged, key) || !hasValue(merged[key])) {
+    if (!(key in merged) || merged[key] === undefined || merged[key] === null || merged[key] === '') {
       merged[key] = value
     }
   }
@@ -555,7 +421,7 @@ function unwrapRecordData(record) {
     }
   }
 
-  const dataJson = pickFirstObject(baseRecord, ['data_json', 'dataJson', 'json_data']) || null
+  const dataJson = pickFirstObject(baseRecord, ['data_json', 'dataJson', 'json_data'])
   if (typeof dataJson === 'string') {
     try {
       const parsed = JSON.parse(dataJson)
@@ -576,10 +442,8 @@ function unwrapRecordData(record) {
 }
 
 function normalizeRecord(record) {
-  if (!record || typeof record !== 'object') return {}
-  const anyRecord = unwrapRecordData(record)
-  const pick = (keys) => pickFirstObject(anyRecord, keys)
-
+  const source = unwrapRecordData(record)
+  const pick = (keys) => pickFirstObject(source, keys)
   return {
     product_code: pick(['product_code', 'productCode', 'code_product', 'code']) || '',
     version_no: pick(['version_no', 'versionNo', 'version']) || '',
@@ -587,7 +451,6 @@ function normalizeRecord(record) {
     factory: pick(['factory', 'factory_name', 'plant']) || '',
     product_category: pick(['product_category', 'productCategory', 'category']) || '',
     customer_name: pick(['customer_name', 'customerName', 'customer']) || '',
-    status: pick(['status']) || '',
     tax_rate: pick(['tax_rate', 'taxRate']) || '',
     quoted_price_tax: pick(['quoted_price_tax', 'quotedPriceTax']) || '',
     sales_revenue: pick(['sales_revenue', 'salesRevenue']) || '',
@@ -599,34 +462,18 @@ function normalizeRecord(record) {
     expense_total: pick(['expense_total', 'expenseTotal']) || '',
     total_cost: pick(['total_cost', 'totalCost']) || '',
     contribution_amount: pick(['contribution_amount', 'contributionAmount']) || '',
-    contribution_rate: pick(['contribution_rate', 'contributionRate']) || '',
     gross_profit_amount: pick(['gross_profit_amount', 'grossProfitAmount']) || '',
-    gross_profit_rate: pick(['gross_profit_rate', 'grossProfitRate']) || '',
     pretax_profit_amount: pick(['pretax_profit_amount', 'pretaxProfitAmount']) || '',
-    pretax_profit_rate: pick(['pretax_profit_rate', 'pretaxProfitRate']) || '',
     income_tax_amount: pick(['income_tax_amount', 'incomeTaxAmount']) || '',
-    income_tax_rate: pick(['income_tax_rate', 'incomeTaxRate']) || '',
-    net_profit_amount: pick(['net_profit_amount', 'netProfitAmount']) || '',
-    net_profit_rate: pick(['net_profit_rate', 'netProfitRate']) || ''
+    net_profit_amount: pick(['net_profit_amount', 'netProfitAmount']) || ''
   }
 }
 
 function normalizeDetailRow(row, section) {
-  if (!row || typeof row !== 'object') return row
-  const normalizedRow = unwrapRecordData(row)
-  const pick = (keys) => pickFirstObject(normalizedRow, keys)
-  const normalizeLineNo = (fallback) => {
-    const raw = pick(['line_no', 'lineNo', 'row_no', 'rowNo'])
-    if (raw !== undefined && raw !== null && String(raw).trim() !== '') {
-      const asNumber = Number(raw)
-      return Number.isFinite(asNumber) ? asNumber : raw
-    }
-    return fallback
-  }
-
+  const source = unwrapRecordData(row)
+  const pick = (keys) => pickFirstObject(source, keys)
   if (section === 'material') {
     return {
-      line_no: normalizeLineNo(''),
       item_name: pick(['item_name', 'itemName', 'material_name', 'name']) || '',
       item_code: pick(['item_code', 'itemCode', 'material_code', 'code']) || '',
       spec: pick(['spec', 'specification']) || '',
@@ -638,10 +485,8 @@ function normalizeDetailRow(row, section) {
       amount: pick(['amount', 'line_amount', 'subtotal']) || ''
     }
   }
-
   if (section === 'labor') {
     return {
-      line_no: normalizeLineNo(''),
       process_name: pick(['process_name', 'processName', 'process']) || '',
       work_minutes: pick(['work_minutes', 'workMinutes', 'minutes']) || '',
       worker_count: pick(['worker_count', 'workerCount', 'workers']) || '',
@@ -651,9 +496,7 @@ function normalizeDetailRow(row, section) {
       subtotal: pick(['subtotal', 'amount', 'line_amount']) || ''
     }
   }
-
   return {
-    line_no: normalizeLineNo(''),
     expense_type: pick(['expense_type', 'expenseType', 'type']) || '',
     detail_name: pick(['detail_name', 'detailName', 'name']) || '',
     amount: pick(['amount', 'line_amount', 'subtotal']) || '',
@@ -662,14 +505,9 @@ function normalizeDetailRow(row, section) {
 }
 
 async function loadMainRecord(recordId) {
-  if (!recordId) return null
-
   let payload = null
   try {
-    payload = await withTimeout(
-      hostDataApi.getRecord(MAIN_ENTITY_CODE, recordId),
-      `getRecord(${MAIN_ENTITY_CODE}, ${recordId})`
-    )
+    payload = await withTimeout(hostDataApi.getRecord(MAIN_ENTITY_CODE, recordId), `getRecord(${MAIN_ENTITY_CODE}, ${recordId})`)
     debugLog('self-load:getRecord:success', { recordId })
   }
   catch (_error) {
@@ -690,10 +528,7 @@ async function loadMainRecord(recordId) {
 
   for (const body of queryBodies) {
     try {
-      const queryPayload = await withTimeout(
-        hostDataApi.queryRecords(MAIN_ENTITY_CODE, body),
-        `queryRecords(${MAIN_ENTITY_CODE})`
-      )
+      const queryPayload = await withTimeout(hostDataApi.queryRecords(MAIN_ENTITY_CODE, body), `queryRecords(${MAIN_ENTITY_CODE})`)
       const rows = extractRowsFromPayload(queryPayload)
       if (rows.length) return rows[0]
     }
@@ -711,38 +546,25 @@ async function loadDetailRowsByCardNo(cardNo, entityCode) {
     { filters: { card_no: cardNo }, pageIndex: 0, pageSize: 500 },
     { filters: [{ field: 'card_no', operator: 'eq', value: cardNo }], pageIndex: 0, pageSize: 500 }
   ]
-
   for (const body of queryBodies) {
     try {
-      const payload = await withTimeout(
-        hostDataApi.queryRecords(entityCode, body),
-        `queryRecords(${entityCode})`
-      )
-      const rows = extractRowsFromPayload(payload)
-      if (Array.isArray(rows)) return rows
+      const payload = await withTimeout(hostDataApi.queryRecords(entityCode, body), `queryRecords(${entityCode})`)
+      return extractRowsFromPayload(payload)
     }
     catch (_error) {
       continue
     }
   }
-
   return []
 }
 
 async function loadPayloadByRecordId(recordId) {
   const mainRecord = await loadMainRecord(recordId)
-  if (!mainRecord) {
-    return {
-      product: {},
-      materialRows: [],
-      laborRows: [],
-      expenseRows: []
-    }
-  }
+  if (!mainRecord) return { product: {}, materialRows: [], laborRows: [], expenseRows: [] }
 
   const normalizedMain = unwrapRecordData(mainRecord)
   const cardNo = normalizedMain.card_no || normalizedMain.cardNo || ''
-  const [materialRows, laborRows, expenseRows] = await Promise.all([
+  const [material, labor, expense] = await Promise.all([
     loadDetailRowsByCardNo(cardNo, 'cost_card_material'),
     loadDetailRowsByCardNo(cardNo, 'cost_card_labor'),
     loadDetailRowsByCardNo(cardNo, 'cost_card_expense')
@@ -750,93 +572,28 @@ async function loadPayloadByRecordId(recordId) {
 
   return {
     product: normalizeRecord(normalizedMain),
-    materialRows: materialRows.map((row, index) => {
-      const normalized = normalizeDetailRow(row, 'material')
-      if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
-      return normalized
-    }),
-    laborRows: laborRows.map((row, index) => {
-      const normalized = normalizeDetailRow(row, 'labor')
-      if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
-      return normalized
-    }),
-    expenseRows: expenseRows.map((row, index) => {
-      const normalized = normalizeDetailRow(row, 'expense')
-      if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
-      return normalized
-    })
+    materialRows: material.map((row) => normalizeDetailRow(row, 'material')),
+    laborRows: labor.map((row) => normalizeDetailRow(row, 'labor')),
+    expenseRows: expense.map((row) => normalizeDetailRow(row, 'expense'))
   }
 }
-
-function parseInitialPayload() {
-  if (props.initialDataJson) {
-    try {
-      const parsed = JSON.parse(props.initialDataJson)
-      console.info('[cost-card-form-base] parseInitialPayload:json', {
-        hasValue: !!parsed,
-        valueType: typeof parsed
-      })
-      return parsed
-    }
-    catch (error) {
-      console.info('[cost-card-form-base] parseInitialPayload:json-error', {
-        error: error instanceof Error ? error.message : String(error)
-      })
-    }
-  }
-
-  const value = props.initialData
-  console.info('[cost-card-form-base] parseInitialPayload:fallback', {
-    hasValue: !!value,
-    valueType: typeof value
-  })
-  return value
-}
-
-watch(
-  () => props.initialDataJson,
-  (value) => {
-    if (props.recordId) return
-    console.info('[cost-card-form-base] watch:initialDataJson', {
-      length: value?.length || 0
-    })
-    applyInitialData(parseInitialPayload())
-  },
-  { immediate: true }
-)
-
-watch(
-  () => props.initialVersion,
-  (version) => {
-    if (props.recordId) return
-    console.info('[cost-card-form-base] watch:initialVersion', { version })
-    applyInitialData(parseInitialPayload())
-  },
-  { immediate: true }
-)
 
 watch(
   () => props.recordId,
   async (recordId) => {
     debugLog('watch:recordId', { recordId })
     if (!recordId) {
-      applyInitialData({
-        product: {},
-        materialRows: [],
-        laborRows: [],
-        expenseRows: []
-      })
+      resetFormData()
       return
     }
-
     const payload = await loadPayloadByRecordId(recordId)
     debugLog('self-load:payload-ready', {
       recordId,
       productCode: payload.product?.product_code || '',
       productName: payload.product?.product_name || '',
-      materialCount: payload.materialRows?.length || 0,
-      laborCount: payload.laborRows?.length || 0,
-      expenseCount: payload.expenseRows?.length || 0
+      materialCount: payload.materialRows.length,
+      laborCount: payload.laborRows.length,
+      expenseCount: payload.expenseRows.length
     })
     applyInitialData(payload)
   },
@@ -861,82 +618,23 @@ const STYLE_TEXT = `
 .scene-head p { margin: 0; color: #6b7280; font-size: 12px; }
 .block { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
 .block h2 { margin: 0 0 10px; font-size: 15px; }
-.grid { display: grid; gap: 10px; }
-.product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.top-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; }
-.summary-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.summary-card { border: 1px solid #e5e7eb; border-top-width: 2px; border-radius: 8px; padding: 10px; background: #fff; }
+.product-grid, .quote-grid, .summary-grid { display: grid; gap: 10px; }
+.product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 12px; }
+.quote-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 12px; }
+.summary-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.summary-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; }
 .summary-card .title { font-size: 13px; color: #6b7280; }
-.summary-card .amount { font-size: 28px; line-height: 1.1; text-align: right; font-weight: 700; }
-.summary-card .ratio { font-size: 16px; text-align: right; color: #9ca3af; }
-.sc-blue { border-top-color: #3b82f6; } .sc-blue .amount { color: #3b82f6; }
-.sc-green { border-top-color: #10b981; } .sc-green .amount { color: #10b981; }
-.sc-orange { border-top-color: #f59e0b; } .sc-orange .amount { color: #f59e0b; }
-.sc-total { border-top-color: #1e3a5f; } .sc-total .amount { color: #1e3a5f; text-align: center; }
-.quote-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
-.left-panels { display: grid; gap: 10px; }
-.inner-panel { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; background: #fff; }
-.inner-panel h3 { margin: 0 0 8px; font-size: 13px; }
-.quote-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-.profit-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-.profit-card { border: 1px solid #e5e7eb; border-top-width: 2px; border-radius: 8px; padding: 8px; }
-.profit-card span { font-size: 12px; color: #6b7280; }
-.profit-card b { display: block; text-align: right; font-size: 22px; line-height: 1.1; color: #1f2937; }
-.profit-card em { display: block; text-align: right; font-style: normal; font-size: 14px; color: #6b7280; }
-.pc-blue { border-top-color: #3b82f6; }
-.pc-green { border-top-color: #10b981; }
-.pc-orange { border-top-color: #f59e0b; }
-.pc-dark { border-top-color: #475569; }
-.pc-main { border-top-color: #1e3a5f; }
-.ratio-wrap { display: flex; gap: 12px; align-items: center; }
-.ratio-ring { width: 160px; height: 160px; border-radius: 50%; background: conic-gradient(#3b82f6 0% 45.6%, #f59e0b 45.6% 49.49%, #10b981 49.49% 61.79%, #475569 61.79% 64.99%, #1e3a5f 64.99% 76.79%); position: relative; }
-.ratio-ring::after { content: '成本占比'; position: absolute; inset: 32px; border-radius: 50%; background: #fff; display: grid; place-items: center; color: #1e3a5f; font-weight: 700; font-size: 14px; }
-.legend { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
-.legend li { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: center; font-size: 12px; }
-.legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-.legend span { color: #6b7280; } .legend b { color: #9ca3af; font-weight: 500; }
-.c1 { background: #3b82f6; } .c2 { background: #f59e0b; } .c3 { background: #10b981; }
-.c4 { background: #475569; } .c5 { background: #1e3a5f; } .c6 { background: #9ca3af; }
-.section-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.tag-blue, .tag-green, .tag-orange { font-size: 12px; border-radius: 4px; padding: 2px 8px; }
-.tag-blue { color: #3b82f6; background: rgba(59,130,246,.1); }
-.tag-green { color: #10b981; background: rgba(16,185,129,.1); }
-.tag-orange { color: #f59e0b; background: rgba(245,158,11,.1); }
-.split-layout { display: grid; grid-template-columns: 2fr 1fr; border-top: 1px solid #e5e7eb; }
-.side-panel { border-left: 1px solid #e5e7eb; padding: 10px; }
-.side-panel h3 { margin: 0 0 8px; font-size: 13px; }
-.mini-ring { width: 130px; height: 130px; margin: 0 auto 8px; border-radius: 50%; position: relative; }
-.material-ring { background: conic-gradient(#f59e0b 0% 47.5%, #3b82f6 47.5% 74.6%, #10b981 74.6% 100%); }
-.material-ring::after { content: '¥8.19'; position: absolute; inset: 24px; border-radius: 50%; background: #fff; display: grid; place-items: center; color: #1e3a5f; font-weight: 700; }
-.expense-ring { background: conic-gradient(#f59e0b 0% 24.8%, #3b82f6 24.8% 47%, #10b981 47% 65.8%, #475569 65.8% 76.7%, #1e3a5f 76.7% 87.6%, #9ca3af 87.6% 100%); }
-.expense-ring::after { content: '¥20.20'; position: absolute; inset: 24px; border-radius: 50%; background: #fff; display: grid; place-items: center; color: #1e3a5f; font-weight: 700; }
-.bar-list { display: grid; gap: 8px; }
-.bar-item { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px; align-items: center; font-size: 12px; }
-.bar-item label { color: #6b7280; }
-.bar-item span { display: block; height: 8px; border-radius: 4px; background: #10b981; }
-.bar-item b { color: #1f2937; }
+.summary-card .amount { font-size: 28px; line-height: 1.1; font-weight: 700; }
 .field { display: grid; gap: 4px; }
-.field span { font-size: 12px; color: #9ca3af; }
-input { width: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 6px; padding: 6px 8px; font-size: 13px; }
+.field span { font-size: 12px; color: #6b7280; }
+input { width: 100%; box-sizing: border-box; border: 1px solid #d1d5db; border-radius: 6px; padding: 8px; font-size: 13px; background: #fff; }
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
-th { text-align: left; font-weight: 500; font-size: 12px; color: #6b7280; background: #f7f8fa; padding: 8px; white-space: nowrap; }
-td { border-bottom: 1px solid #f0f0f0; padding: 6px; }
-td input { border: 1px solid transparent; background: transparent; padding: 4px 6px; }
-td input.readonly { color: #6b7280; }
-tr.alt { background: #f7f8fa; }
-.compact li { grid-template-columns: 8px 1fr auto; }
-.compact i { width: 8px; height: 8px; }
-@media (max-width: 1200px) {
-  .top-layout, .quote-layout, .split-layout { grid-template-columns: 1fr; }
-  .summary-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .profit-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .quote-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .side-panel { border-left: 0; border-top: 1px solid #e5e7eb; }
-}
+th { text-align: left; font-size: 12px; color: #6b7280; background: #f8fafc; padding: 8px; }
+td { border-top: 1px solid #eef2f7; padding: 6px; }
+.section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 @media (max-width: 900px) {
-  .product-grid, .quote-grid, .profit-cards, .summary-cards { grid-template-columns: 1fr; }
-  .ratio-wrap { flex-direction: column; align-items: flex-start; }
+  .product-grid, .quote-grid { grid-template-columns: 1fr; }
 }
 `
 
