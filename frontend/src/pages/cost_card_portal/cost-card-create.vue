@@ -13,7 +13,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onActivated, onBeforeUnmount, onMounted, ref } from 'vue'
 import CostCardFormBase from './cost-card-form-base.vue'
 import { COST_CARD_DEFAULT_SCENES, useCostCardSceneConfig } from './use-cost-card-scene-config'
 
@@ -145,7 +145,29 @@ async function tryFetchJson(url, options) {
   return resp.json()
 }
 
+async function loadMainRecordByHostApi(recordId) {
+  if (!recordId) return null
+
+  const entityCandidates = ['electronic_cost_card', 'cost_card']
+  for (const entity of entityCandidates) {
+    const payload = await tryFetchJson(`/api/data/${entity}/${encodeURIComponent(recordId)}`, {
+      method: 'GET',
+      credentials: 'include'
+    })
+
+    const normalized = normalizeJsonPayload(payload)
+    if (normalized && (normalized.record || normalized.model || normalized.id || normalized.product_code)) {
+      return normalized.record || normalized.model || normalized
+    }
+  }
+
+  return null
+}
+
 async function loadMainRecord(recordId) {
+  const hostRecord = await loadMainRecordByHostApi(recordId)
+  if (hostRecord) return hostRecord
+
   const requestBodies = [
     { entityCode: 'cost_card', recordId },
     { entityCode: 'cost_card', id: recordId },
@@ -287,10 +309,28 @@ async function loadById(recordId) {
   }
 }
 
-onMounted(async () => {
+async function syncFromLocation() {
   const recordId = getRecordIdFromLocation()
   currentRecordId.value = recordId
-  if (!recordId) return
+  if (!recordId) {
+    loadedData.value = null
+    return
+  }
   await loadById(recordId)
+}
+
+onMounted(async () => {
+  await syncFromLocation()
+  globalThis?.addEventListener?.('hashchange', syncFromLocation)
+  globalThis?.addEventListener?.('popstate', syncFromLocation)
+})
+
+onActivated(() => {
+  void syncFromLocation()
+})
+
+onBeforeUnmount(() => {
+  globalThis?.removeEventListener?.('hashchange', syncFromLocation)
+  globalThis?.removeEventListener?.('popstate', syncFromLocation)
 })
 </script>
