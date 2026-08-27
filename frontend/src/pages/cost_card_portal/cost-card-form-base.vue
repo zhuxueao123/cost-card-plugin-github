@@ -1,6 +1,5 @@
 <template>
   <section class="cost-card-page">
-    <div class="debug-tag">form-base {{ FORM_BASE_BUILD_TAG }}</div>
     <header class="scene-head">
       <h1>{{ sceneTitle }}</h1>
       <p>{{ sceneCode }}</p>
@@ -203,7 +202,6 @@
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useHostDataApi } from '@trusteem/asapflow-plugin-sdk'
 
-const FORM_BASE_BUILD_TAG = '2026-08-28T03:15+08:00'
 const MAIN_ENTITY_CODE = 'cost_card'
 const REQUEST_TIMEOUT_MS = 8000
 const STYLE_ID = 'cost-card-form-inline-style'
@@ -388,10 +386,6 @@ function createEmptyProduct() {
   }
 }
 
-function debugLog(stage, payload) {
-  console.info(`[cost-card-form-base] ${stage}`, payload)
-}
-
 function syncInputValue(el, value) {
   if (!el) return
   const nextValue = value ?? ''
@@ -516,13 +510,6 @@ function syncRenderedDom() {
   syncTableValues('.material-table', materialRows.value, materialVisibleColumns.value)
   syncTableValues('.labor-table', laborRows.value, laborVisibleColumns.value)
   syncTableValues('.expense-table', expenseRows.value, expenseVisibleColumns.value)
-
-  debugLog('syncRenderedDom', {
-    product_code: product.product_code,
-    product_name: product.product_name,
-    materialAmount: summaryView.value.materialAmount,
-    materialCount: materialRows.value.length
-  })
 }
 
 function resolveVisibleColumns(section, allColumns) {
@@ -630,7 +617,6 @@ function applyInitialData(payload, source = 'unknown') {
   const normalized = normalizeIncomingPayload(payload)
   if (!normalized) {
     resetFormData()
-    debugLog('applyInitialData:skip', { source, reason: 'payload-empty' })
     return
   }
 
@@ -640,16 +626,6 @@ function applyInitialData(payload, source = 'unknown') {
   applyRowsData(laborRows, normalized.laborRows)
   applyRowsData(expenseRows, normalized.expenseRows)
   ensureDerivedTotals()
-
-  debugLog('applyInitialData:applied', {
-    source,
-    product_code: product.product_code,
-    product_name: product.product_name,
-    customer_name: product.customer_name,
-    materialCount: materialRows.value.length,
-    laborCount: laborRows.value.length,
-    expenseCount: expenseRows.value.length
-  })
 
   nextTick(syncRenderedDom)
 }
@@ -805,10 +781,9 @@ async function loadMainRecord(recordId) {
   let payload = null
   try {
     payload = await withTimeout(hostDataApi.getRecord(MAIN_ENTITY_CODE, recordId), `getRecord(${MAIN_ENTITY_CODE}, ${recordId})`)
-    debugLog('self-load:getRecord:success', { recordId })
   }
   catch (_error) {
-    debugLog('self-load:getRecord:failed', { recordId })
+    // Fallback to queryRecords when direct getRecord is unavailable.
   }
 
   const normalized = normalizeJsonPayload(payload)
@@ -880,14 +855,6 @@ async function loadPayloadByRecordId(recordId) {
 async function applySelfLoadedData(recordId) {
   if (!recordId) return
   const payload = await loadPayloadByRecordId(recordId)
-  debugLog('self-load:payload-ready', {
-    recordId,
-    productCode: payload.product?.product_code || '',
-    productName: payload.product?.product_name || '',
-    materialCount: payload.materialRows.length,
-    laborCount: payload.laborRows.length,
-    expenseCount: payload.expenseRows.length
-  })
   applyInitialData(payload, 'recordId')
 }
 
@@ -913,7 +880,6 @@ watch(
 watch(
   () => props.recordId,
   async (recordId) => {
-    debugLog('watch:recordId', { recordId })
     if (!recordId) {
       if (!props.initialData) resetFormData()
       return
@@ -953,7 +919,6 @@ function isCellEditable(section, fieldKey) {
 
 const STYLE_TEXT = `
 .cost-card-page { min-height: 100vh; background: #f0f2f5; padding: 16px; color: #1f2937; }
-.debug-tag { display: inline-block; margin-bottom: 8px; padding: 2px 8px; border-radius: 4px; border: 1px solid #bfdbfe; background: #eff6ff; color: #2563eb; font-size: 11px; }
 .scene-head { display: flex; justify-content: space-between; align-items: end; margin-bottom: 12px; }
 .scene-head h1 { margin: 0; font-size: 22px; }
 .scene-head p { margin: 0; color: #6b7280; font-size: 12px; }
