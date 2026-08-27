@@ -199,7 +199,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watchEffect } from 'vue'
 
 const FORM_BASE_BUILD_TAG = '2026-08-28T01:05+08:00'
 console.info('[cost-card-form-base] build-tag', FORM_BASE_BUILD_TAG)
@@ -431,8 +431,22 @@ function applyRowsData(targetRowsRef, rowsData) {
   targetRowsRef.value = rowsData.map((row) => ({ ...row }))
 }
 
+function resetFormData() {
+  const keys = Object.keys(product)
+  for (const key of keys) {
+    product[key] = ''
+  }
+  materialRows.value = []
+  laborRows.value = []
+  expenseRows.value = []
+}
+
 function applyInitialData(payload) {
-  if (!payload || typeof payload !== 'object') return
+  if (!payload || typeof payload !== 'object') {
+    resetFormData()
+    console.info('[cost-card-form-base] applyInitialData:skip', { reason: 'payload-empty' })
+    return
+  }
   console.info('[cost-card-form-base] applyInitialData', {
     hasProduct: !!(payload.product || payload.model),
     materialCount: Array.isArray(payload.materialRows || payload.material || payload.material_items)
@@ -449,15 +463,24 @@ function applyInitialData(payload) {
   applyRowsData(materialRows, payload.materialRows || payload.material || payload.material_items)
   applyRowsData(laborRows, payload.laborRows || payload.labor || payload.labor_items)
   applyRowsData(expenseRows, payload.expenseRows || payload.expense || payload.expense_items)
+  console.info('[cost-card-form-base] applyInitialData:applied', {
+    product_code: product.product_code,
+    product_name: product.product_name,
+    customer_name: product.customer_name,
+    materialCount: materialRows.value.length,
+    laborCount: laborRows.value.length,
+    expenseCount: expenseRows.value.length
+  })
 }
 
-watch(
-  () => props.initialData,
-  (value) => {
-    applyInitialData(value)
-  },
-  { deep: true, immediate: true }
-)
+watchEffect(() => {
+  const value = props.initialData
+  console.info('[cost-card-form-base] watchEffect:initialData', {
+    hasValue: !!value,
+    valueType: typeof value
+  })
+  applyInitialData(value)
+})
 
 function isSectionVisible(section) {
   return !!props.sectionVisibility?.[section]
