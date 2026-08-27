@@ -71,6 +71,21 @@ function pickFirstObject(source, candidateKeys) {
   return null
 }
 
+function hasValue(value) {
+  return value !== undefined && value !== null && value !== ''
+}
+
+function mergeWithoutOverwritingPrimary(primary, secondary) {
+  if (!secondary || typeof secondary !== 'object') return { ...primary }
+  const merged = { ...primary }
+  for (const [key, value] of Object.entries(secondary)) {
+    if (!Object.prototype.hasOwnProperty.call(merged, key) || !hasValue(merged[key])) {
+      merged[key] = value
+    }
+  }
+  return merged
+}
+
 function normalizeJsonPayload(payload) {
   if (!payload || typeof payload !== 'object') return null
   if (payload.data && typeof payload.data === 'object') return payload.data
@@ -142,7 +157,7 @@ function unwrapRecordData(record) {
     try {
       const parsed = JSON.parse(dataJson)
       if (parsed && typeof parsed === 'object') {
-        return { ...baseRecord, ...parsed }
+        return mergeWithoutOverwritingPrimary(baseRecord, parsed)
       }
     }
     catch (_error) {
@@ -151,7 +166,7 @@ function unwrapRecordData(record) {
   }
 
   if (dataJson && typeof dataJson === 'object') {
-    return { ...baseRecord, ...dataJson }
+    return mergeWithoutOverwritingPrimary(baseRecord, dataJson)
   }
 
   return baseRecord
