@@ -21,6 +21,7 @@ import { COST_CARD_DEFAULT_SCENES, useCostCardSceneConfig } from './use-cost-car
 const { configState, sceneTitle } = useCostCardSceneConfig('cc_create', COST_CARD_DEFAULT_SCENES.cc_create)
 const pluginContext = usePluginContext()
 const hostDataApi = useHostDataApi()
+const MAIN_ENTITY_CODE = 'cost_card'
 
 const loadedData = ref(null)
 const currentRecordId = computed(() => {
@@ -76,7 +77,28 @@ function normalizeRecord(record) {
     product_name: pick(['product_name', 'productName', 'name']) || '',
     factory: pick(['factory', 'factory_name', 'plant']) || '',
     product_category: pick(['product_category', 'productCategory', 'category']) || '',
-    customer_name: pick(['customer_name', 'customerName', 'customer']) || ''
+    customer_name: pick(['customer_name', 'customerName', 'customer']) || '',
+    status: pick(['status']) || '',
+    tax_rate: pick(['tax_rate', 'taxRate']) || '',
+    quoted_price_tax: pick(['quoted_price_tax', 'quotedPriceTax']) || '',
+    sales_revenue: pick(['sales_revenue', 'salesRevenue']) || '',
+    rebate_rate: pick(['rebate_rate', 'rebateRate']) || '',
+    account_period_days: pick(['account_period_days', 'accountPeriodDays']) || '',
+    freight_amount: pick(['freight_amount', 'freightAmount']) || '',
+    material_total: pick(['material_total', 'materialTotal']) || '',
+    labor_total: pick(['labor_total', 'laborTotal']) || '',
+    expense_total: pick(['expense_total', 'expenseTotal']) || '',
+    total_cost: pick(['total_cost', 'totalCost']) || '',
+    contribution_amount: pick(['contribution_amount', 'contributionAmount']) || '',
+    contribution_rate: pick(['contribution_rate', 'contributionRate']) || '',
+    gross_profit_amount: pick(['gross_profit_amount', 'grossProfitAmount']) || '',
+    gross_profit_rate: pick(['gross_profit_rate', 'grossProfitRate']) || '',
+    pretax_profit_amount: pick(['pretax_profit_amount', 'pretaxProfitAmount']) || '',
+    pretax_profit_rate: pick(['pretax_profit_rate', 'pretaxProfitRate']) || '',
+    income_tax_amount: pick(['income_tax_amount', 'incomeTaxAmount']) || '',
+    income_tax_rate: pick(['income_tax_rate', 'incomeTaxRate']) || '',
+    net_profit_amount: pick(['net_profit_amount', 'netProfitAmount']) || '',
+    net_profit_rate: pick(['net_profit_rate', 'netProfitRate']) || ''
   }
 }
 
@@ -108,20 +130,17 @@ function unwrapRecordData(record) {
 async function loadMainRecordByHostApi(recordId) {
   if (!recordId) return null
 
-  const entityCandidates = ['electronic_cost_card', 'cost_card']
-  for (const entity of entityCandidates) {
-    let payload = null
-    try {
-      payload = await hostDataApi.getRecord(entity, recordId)
-    }
-    catch (_error) {
-      continue
-    }
+  let payload = null
+  try {
+    payload = await hostDataApi.getRecord(MAIN_ENTITY_CODE, recordId)
+  }
+  catch (_error) {
+    return null
+  }
 
-    const normalized = normalizeJsonPayload(payload)
-    if (normalized && (normalized.record || normalized.model || normalized.id || normalized.product_code)) {
-      return normalized.record || normalized.model || normalized
-    }
+  const normalized = normalizeJsonPayload(payload)
+  if (normalized && (normalized.record || normalized.model || normalized.id || normalized.product_code)) {
+    return normalized.record || normalized.model || normalized
   }
 
   return null

@@ -17,22 +17,22 @@
         <div class="summary-cards">
           <article class="summary-card sc-blue">
             <div class="title">材料成本</div>
-            <div class="amount">¥45.60</div>
-            <div class="ratio">52.2%</div>
+            <div class="amount">{{ summaryView.materialAmount }}</div>
+            <div class="ratio">{{ summaryView.materialRatio }}</div>
           </article>
           <article class="summary-card sc-green">
             <div class="title">人工成本</div>
-            <div class="amount">¥12.30</div>
-            <div class="ratio">14.1%</div>
+            <div class="amount">{{ summaryView.laborAmount }}</div>
+            <div class="ratio">{{ summaryView.laborRatio }}</div>
           </article>
           <article class="summary-card sc-orange">
             <div class="title">费用成本</div>
-            <div class="amount">¥15.00</div>
-            <div class="ratio">17.2%</div>
+            <div class="amount">{{ summaryView.expenseAmount }}</div>
+            <div class="ratio">{{ summaryView.expenseRatio }}</div>
           </article>
           <article class="summary-card sc-total">
             <div class="title">总成本</div>
-            <div class="amount">¥87.40</div>
+            <div class="amount">{{ summaryView.totalCost }}</div>
           </article>
         </div>
       </div>
@@ -45,35 +45,33 @@
           <div class="inner-panel">
             <h3>销售报价</h3>
             <div class="grid quote-grid">
-              <label class="field"><span>税率</span><input value="13%" readonly /></label>
-              <label class="field"><span>销售含税报价</span><input value="113.00" readonly /></label>
-              <label class="field"><span>销售收入</span><input value="100.00" readonly /></label>
-              <label class="field"><span>票前扣点与返利</span><input value="5%" readonly /></label>
-              <label class="field"><span>账期</span><input value="30天" readonly /></label>
-              <label class="field"><span>运费</span><input value="0.00" readonly /></label>
+              <label class="field"><span>税率</span><input :value="quoteView.taxRate" readonly /></label>
+              <label class="field"><span>销售含税报价</span><input :value="quoteView.quotedPriceTax" readonly /></label>
+              <label class="field"><span>销售收入</span><input :value="quoteView.salesRevenue" readonly /></label>
+              <label class="field"><span>票前扣点与返利</span><input :value="quoteView.rebateRate" readonly /></label>
+              <label class="field"><span>账期</span><input :value="quoteView.accountPeriodDays" readonly /></label>
+              <label class="field"><span>运费</span><input :value="quoteView.freightAmount" readonly /></label>
             </div>
           </div>
           <div class="inner-panel">
             <h3>利润</h3>
             <div class="profit-cards">
-              <article class="profit-card pc-blue"><span>边际贡献</span><b>¥51.20</b><em>51.20%</em></article>
-              <article class="profit-card pc-green"><span>毛利额</span><b>¥50.51</b><em>50.51%</em></article>
-              <article class="profit-card pc-orange"><span>税前利润</span><b>¥35.51</b><em>35.51%</em></article>
-              <article class="profit-card pc-dark"><span>所得税</span><b>¥4.62</b><em>4.62%</em></article>
-              <article class="profit-card pc-main"><span>净利润</span><b>¥30.89</b><em>30.89%</em></article>
+              <article class="profit-card pc-blue"><span>边际贡献</span><b>{{ profitView.contributionAmount }}</b><em>{{ profitView.contributionRate }}</em></article>
+              <article class="profit-card pc-green"><span>毛利额</span><b>{{ profitView.grossProfitAmount }}</b><em>{{ profitView.grossProfitRate }}</em></article>
+              <article class="profit-card pc-orange"><span>税前利润</span><b>{{ profitView.pretaxProfitAmount }}</b><em>{{ profitView.pretaxProfitRate }}</em></article>
+              <article class="profit-card pc-dark"><span>所得税</span><b>{{ profitView.incomeTaxAmount }}</b><em>{{ profitView.incomeTaxRate }}</em></article>
+              <article class="profit-card pc-main"><span>净利润</span><b>{{ profitView.netProfitAmount }}</b><em>{{ profitView.netProfitRate }}</em></article>
             </div>
           </div>
         </div>
         <aside class="inner-panel ratio-panel">
           <h3>成本占比</h3>
           <div class="ratio-wrap">
-            <div class="ratio-ring"></div>
+            <div class="ratio-ring" :style="ratioRingStyle"></div>
             <ul class="legend">
-              <li><i class="c1"></i><span>原辅料 ¥45.60</span><b>45.60%</b></li>
-              <li><i class="c2"></i><span>包材 ¥3.89</span><b>3.89%</b></li>
-              <li><i class="c3"></i><span>直接人工 ¥12.30</span><b>12.30%</b></li>
-              <li><i class="c4"></i><span>变动费用 ¥3.20</span><b>3.20%</b></li>
-              <li><i class="c5"></i><span>固定费用 ¥11.80</span><b>11.80%</b></li>
+              <li><i class="c1"></i><span>材料 {{ summaryView.materialAmount }}</span><b>{{ ratioChartView.materialRatio }}</b></li>
+              <li><i class="c3"></i><span>人工 {{ summaryView.laborAmount }}</span><b>{{ ratioChartView.laborRatio }}</b></li>
+              <li><i class="c2"></i><span>费用 {{ summaryView.expenseAmount }}</span><b>{{ ratioChartView.expenseRatio }}</b></li>
             </ul>
           </div>
         </aside>
@@ -83,7 +81,7 @@
     <section class="block" v-if="isSectionVisible('material')">
       <div class="section-head">
         <h2>材料成本</h2>
-        <span class="tag-blue">¥45.60</span>
+        <span class="tag-blue">{{ summaryView.materialAmount }}</span>
       </div>
       <div class="split-layout">
         <div class="table-wrap">
@@ -121,7 +119,7 @@
     <section class="block" v-if="isSectionVisible('labor')">
       <div class="section-head">
         <h2>人工成本</h2>
-        <span class="tag-green">¥30.44</span>
+        <span class="tag-green">{{ summaryView.laborAmount }}</span>
       </div>
       <div class="split-layout">
         <div class="table-wrap">
@@ -160,7 +158,7 @@
     <section class="block" v-if="isSectionVisible('expense')">
       <div class="section-head">
         <h2>费用成本</h2>
-        <span class="tag-orange">¥20.20</span>
+        <span class="tag-orange">{{ summaryView.expenseAmount }}</span>
       </div>
       <div class="split-layout">
         <div class="table-wrap">
@@ -232,7 +230,27 @@ const product = reactive({
   product_name: '叮咚-南瓜巴斯克',
   factory: '南通',
   product_category: '西餐',
-  customer_name: '叮咚买菜'
+  customer_name: '叮咚买菜',
+  tax_rate: '13%',
+  quoted_price_tax: '113.00',
+  sales_revenue: '100.00',
+  rebate_rate: '5%',
+  account_period_days: '30',
+  freight_amount: '0.00',
+  material_total: '45.60',
+  labor_total: '12.30',
+  expense_total: '15.00',
+  total_cost: '87.40',
+  contribution_amount: '51.20',
+  contribution_rate: '51.20%',
+  gross_profit_amount: '50.51',
+  gross_profit_rate: '50.51%',
+  pretax_profit_amount: '35.51',
+  pretax_profit_rate: '35.51%',
+  income_tax_amount: '4.62',
+  income_tax_rate: '4.62%',
+  net_profit_amount: '30.89',
+  net_profit_rate: '30.89%'
 })
 
 const materialColumns = [
@@ -304,6 +322,115 @@ function resolveVisibleColumns(section, allColumns) {
 const materialVisibleColumns = computed(() => resolveVisibleColumns('material', materialColumns))
 const laborVisibleColumns = computed(() => resolveVisibleColumns('labor', laborColumns))
 const expenseVisibleColumns = computed(() => resolveVisibleColumns('expense', expenseColumns))
+
+function toNumber(value) {
+  if (value === undefined || value === null || value === '') return null
+  const normalized = Number(String(value).replace('%', '').trim())
+  return Number.isFinite(normalized) ? normalized : null
+}
+
+function formatMoney(value) {
+  const n = toNumber(value)
+  if (n === null) return ''
+  return `¥${n.toFixed(2)}`
+}
+
+function formatPercent(value) {
+  if (value === undefined || value === null || value === '') return ''
+  const raw = String(value).trim()
+  if (raw.includes('%')) return raw
+  const n = Number(raw)
+  if (!Number.isFinite(n)) return raw
+  const normalized = n <= 1 ? n * 100 : n
+  return `${normalized.toFixed(2)}%`
+}
+
+const summaryView = computed(() => {
+  const material = toNumber(product.material_total)
+  const labor = toNumber(product.labor_total)
+  const expense = toNumber(product.expense_total)
+  const total = toNumber(product.total_cost)
+  const safeTotal = total && total > 0 ? total : null
+
+  const materialRatio = safeTotal !== null && material !== null ? `${((material / safeTotal) * 100).toFixed(1)}%` : ''
+  const laborRatio = safeTotal !== null && labor !== null ? `${((labor / safeTotal) * 100).toFixed(1)}%` : ''
+  const expenseRatio = safeTotal !== null && expense !== null ? `${((expense / safeTotal) * 100).toFixed(1)}%` : ''
+
+  return {
+    materialAmount: formatMoney(product.material_total) || '¥0.00',
+    laborAmount: formatMoney(product.labor_total) || '¥0.00',
+    expenseAmount: formatMoney(product.expense_total) || '¥0.00',
+    totalCost: formatMoney(product.total_cost) || '¥0.00',
+    materialRatio,
+    laborRatio,
+    expenseRatio
+  }
+})
+
+const quoteView = computed(() => ({
+  taxRate: formatPercent(product.tax_rate),
+  quotedPriceTax: toNumber(product.quoted_price_tax) === null ? '' : Number(product.quoted_price_tax).toFixed(2),
+  salesRevenue: toNumber(product.sales_revenue) === null ? '' : Number(product.sales_revenue).toFixed(2),
+  rebateRate: formatPercent(product.rebate_rate),
+  accountPeriodDays: product.account_period_days ? `${product.account_period_days}天` : '',
+  freightAmount: toNumber(product.freight_amount) === null ? '' : Number(product.freight_amount).toFixed(2)
+}))
+
+const profitView = computed(() => ({
+  contributionAmount: formatMoney(product.contribution_amount) || '¥0.00',
+  contributionRate: formatPercent(product.contribution_rate),
+  grossProfitAmount: formatMoney(product.gross_profit_amount) || '¥0.00',
+  grossProfitRate: formatPercent(product.gross_profit_rate),
+  pretaxProfitAmount: formatMoney(product.pretax_profit_amount) || '¥0.00',
+  pretaxProfitRate: formatPercent(product.pretax_profit_rate),
+  incomeTaxAmount: formatMoney(product.income_tax_amount) || '¥0.00',
+  incomeTaxRate: formatPercent(product.income_tax_rate),
+  netProfitAmount: formatMoney(product.net_profit_amount) || '¥0.00',
+  netProfitRate: formatPercent(product.net_profit_rate)
+}))
+
+const ratioChartView = computed(() => {
+  const material = Math.max(0, toNumber(product.material_total) || 0)
+  const labor = Math.max(0, toNumber(product.labor_total) || 0)
+  const expense = Math.max(0, toNumber(product.expense_total) || 0)
+  const total = Math.max(0, toNumber(product.total_cost) || material + labor + expense)
+  if (total <= 0) {
+    return {
+      material: 0,
+      labor: 0,
+      expense: 0,
+      materialRatio: '0.0%',
+      laborRatio: '0.0%',
+      expenseRatio: '0.0%'
+    }
+  }
+
+  const materialPct = (material / total) * 100
+  const laborPct = (labor / total) * 100
+  const expensePct = Math.max(0, 100 - materialPct - laborPct)
+
+  return {
+    material: materialPct,
+    labor: laborPct,
+    expense: expensePct,
+    materialRatio: `${materialPct.toFixed(1)}%`,
+    laborRatio: `${laborPct.toFixed(1)}%`,
+    expenseRatio: `${expensePct.toFixed(1)}%`
+  }
+})
+
+const ratioRingStyle = computed(() => {
+  const m = ratioChartView.value.material
+  const l = ratioChartView.value.labor
+  const e = ratioChartView.value.expense
+  const mEnd = m
+  const lEnd = m + l
+  const eEnd = m + l + e
+
+  return {
+    background: `conic-gradient(#3b82f6 0% ${mEnd.toFixed(2)}%, #10b981 ${mEnd.toFixed(2)}% ${lEnd.toFixed(2)}%, #f59e0b ${lEnd.toFixed(2)}% ${eEnd.toFixed(2)}%)`
+  }
+})
 
 function applyProductData(productData) {
   if (!productData || typeof productData !== 'object') return
