@@ -1,0 +1,31 @@
+{
+  "pluginCode": "cost_card_portal",
+  "pluginName": "电子成本卡报表页面插件",
+  "version": "0.1.0",
+  "pages": [
+    {
+      "code": "cost-card-report",
+      "displayName": "成本卡报表",
+      "route": {
+        "name": "plugin-cost-card-report",
+        "path": "/plugins/cost-card/report"
+      },
+      "modulePath": "frontend/src/pages/cost_card_portal/cost-card-report.vue",
+      "bundlePath": "/plugins/frontend/dist/cost_card_portal/cost-card-report.js",
+      "entryExport": "default",
+      "propsSchema": {
+        "type": "object"
+      },
+      "permissions": [],
+      "hostFeatures": [
+        "electronic_cost_card"
+      ],
+      "layout": {
+        "fullWidth": true
+      },
+      "metadata": {
+        "icon": "insights"
+      }
+    }
+  ]
+}
