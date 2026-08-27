@@ -1,5 +1,6 @@
 <template>
   <CostCardFormBase
+    :key="formRenderKey"
     scene-code="cc_create"
     :scene-title="runtimeSceneTitle"
     :product-editable="configState.productEditable"
@@ -29,6 +30,8 @@ function debugLog(stage, payload) {
 }
 
 const loadedData = ref(null)
+const formRenderVersion = ref(0)
+const formRenderKey = computed(() => `${currentRecordId.value || 'new'}:${formRenderVersion.value}`)
 const currentRecordId = computed(() => {
   const routeQuery = pluginContext.query.value || {}
   const candidates = [
@@ -393,9 +396,11 @@ async function loadById(recordId) {
       })
       : undefined
   }
+  formRenderVersion.value += 1
   debugLog('loadById:done', {
     recordId,
     cardNo,
+    formRenderVersion: formRenderVersion.value,
     product: loadedData.value.product,
     materialCount: loadedData.value.materialRows?.length || 0,
     laborCount: loadedData.value.laborRows?.length || 0,
@@ -409,6 +414,7 @@ watch(
     debugLog('watch:currentRecordId', { recordId })
     if (!recordId) {
       loadedData.value = null
+      formRenderVersion.value += 1
       debugLog('watch:clear-loaded-data', null)
       return
     }

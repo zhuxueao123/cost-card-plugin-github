@@ -201,6 +201,9 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 
+const FORM_BASE_BUILD_TAG = '2026-08-28T01:05+08:00'
+console.info('[cost-card-form-base] build-tag', FORM_BASE_BUILD_TAG)
+
 const props = defineProps({
   sceneCode: { type: String, required: true },
   sceneTitle: { type: String, required: true },
