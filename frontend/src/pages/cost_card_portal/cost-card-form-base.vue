@@ -445,7 +445,6 @@ function resetFormData() {
 
 function applyInitialData(payload) {
   if (!payload || typeof payload !== 'object') {
-    resetFormData()
     console.info('[cost-card-form-base] applyInitialData:skip', { reason: 'payload-empty' })
     return
   }

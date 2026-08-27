@@ -68,7 +68,7 @@ const lastLoadError = ref('')
 const formRenderVersion = ref(0)
 const activeLoadToken = ref('')
 const formRenderKey = computed(() => `${currentRecordId.value || 'new'}:${formRenderVersion.value}`)
-const shouldWaitForData = computed(() => !!currentRecordId.value && isLoading.value)
+const shouldWaitForData = computed(() => !!currentRecordId.value && isLoading.value && !loadedData.value)
 const currentRecordId = computed(() => {
   const routeQuery = pluginContext.query.value || {}
   const candidates = [
@@ -551,11 +551,10 @@ watch(
   { immediate: true }
 )
 
-onActivated(async () => {
+onActivated(() => {
   const recordId = currentRecordId.value
   debugLog('onActivated', { recordId })
-  if (!recordId) return
-  await loadById(recordId)
+  // watch(currentRecordId) already drives loading. Avoid duplicate load cycles on activation.
 })
 </script>
 
