@@ -12,7 +12,7 @@
     <span v-if="lastLoadError">err={{ lastLoadError }}</span>
   </section>
   <CostCardFormBase
-    v-else
+    v-if="!shouldWaitForData"
     :key="formRenderKey"
     :initial-version="formRenderVersion"
     scene-code="cc_create"
