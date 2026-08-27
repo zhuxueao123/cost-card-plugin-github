@@ -1,5 +1,5 @@
 <template>
-  <section ref="rootRef" class="cost-card-page">
+  <section class="cost-card-page">
     <div class="debug-tag">form-base {{ FORM_BASE_BUILD_TAG }}</div>
     <header class="scene-head">
       <h1>{{ sceneTitle }}</h1>
@@ -223,7 +223,6 @@ const props = defineProps({
 })
 
 const hostDataApi = useHostDataApi()
-const rootRef = ref(null)
 
 const PRODUCT_FIELDS = [
   { key: 'product_code', label: '产品编码' },
@@ -413,7 +412,9 @@ function syncTextValue(el, value) {
 }
 
 function syncTableValues(selector, rows, columns) {
-  const root = rootRef.value
+  const root = typeof document === 'undefined'
+    ? null
+    : document.querySelector('.cost-card-page')
   if (!root) return
   const inputs = Array.from(root.querySelectorAll(`${selector} tbody input`))
   let cursor = 0
@@ -427,7 +428,9 @@ function syncTableValues(selector, rows, columns) {
 }
 
 function syncRenderedDom() {
-  const root = rootRef.value
+  const root = typeof document === 'undefined'
+    ? null
+    : document.querySelector('.cost-card-page')
   if (!root) return
 
   const productInputs = Array.from(root.querySelectorAll('.product-grid input'))
