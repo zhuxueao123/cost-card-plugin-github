@@ -1,14 +1,19 @@
 <template>
   <CostCardFormBase
     scene-code="cc_create"
-    scene-title="成本卡创建"
-    :product-editable="true"
-    :section-visibility="{ material: true, labor: true, expense: false }"
-    :section-editable="{ material: true, labor: true, expense: false }"
-    :column-editable="{ material: ['*'], labor: ['*'], expense: [] }"
+    :scene-title="sceneTitle"
+    :product-editable="configState.productEditable"
+    :product-field-visibility="configState.productFieldVisibility"
+    :section-visibility="configState.sectionVisibility"
+    :section-editable="configState.sectionEditable"
+    :column-editable="configState.columnEditable"
+    :column-visibility="configState.columnVisibility"
   />
 </template>
 
 <script setup>
 import CostCardFormBase from './cost-card-form-base.vue'
+import { COST_CARD_DEFAULT_SCENES, useCostCardSceneConfig } from './use-cost-card-scene-config'
+
+const { configState, sceneTitle } = useCostCardSceneConfig('cc_create', COST_CARD_DEFAULT_SCENES.cc_create)
 </script>

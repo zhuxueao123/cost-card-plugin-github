@@ -9,7 +9,7 @@
       <h2>产品信息</h2>
       <div class="top-layout">
         <div class="grid product-grid">
-          <label v-for="f in PRODUCT_FIELDS" :key="f.key" class="field">
+          <label v-for="f in visibleProductFields" :key="f.key" class="field">
             <span>{{ f.label }}</span>
             <input v-model="product[f.key]" :readonly="!productEditable" />
           </label>
@@ -90,12 +90,12 @@
           <table>
             <thead>
               <tr>
-                <th v-for="c in materialColumns" :key="c.key">{{ c.label }}</th>
+                <th v-for="c in materialVisibleColumns" :key="c.key">{{ c.label }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(row, idx) in materialRows" :key="'m-' + idx" :class="{ alt: idx % 2 === 1 }">
-                <td v-for="c in materialColumns" :key="c.key">
+                <td v-for="c in materialVisibleColumns" :key="c.key">
                   <input
                     v-model="row[c.key]"
                     :readonly="!isCellEditable('material', c.key)"
@@ -128,12 +128,12 @@
           <table>
             <thead>
               <tr>
-                <th v-for="c in laborColumns" :key="c.key">{{ c.label }}</th>
+                <th v-for="c in laborVisibleColumns" :key="c.key">{{ c.label }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(row, idx) in laborRows" :key="'l-' + idx" :class="{ alt: idx % 2 === 1 }">
-                <td v-for="c in laborColumns" :key="c.key">
+                <td v-for="c in laborVisibleColumns" :key="c.key">
                   <input
                     v-model="row[c.key]"
                     :readonly="!isCellEditable('labor', c.key)"
@@ -167,12 +167,12 @@
           <table>
             <thead>
               <tr>
-                <th v-for="c in expenseColumns" :key="c.key">{{ c.label }}</th>
+                <th v-for="c in expenseVisibleColumns" :key="c.key">{{ c.label }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(row, idx) in expenseRows" :key="'e-' + idx" :class="{ alt: idx % 2 === 1 }">
-                <td v-for="c in expenseColumns" :key="c.key">
+                <td v-for="c in expenseVisibleColumns" :key="c.key">
                   <input
                     v-model="row[c.key]"
                     :readonly="!isCellEditable('expense', c.key)"
@@ -201,15 +201,17 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 
 const props = defineProps({
   sceneCode: { type: String, required: true },
   sceneTitle: { type: String, required: true },
   productEditable: { type: Boolean, default: false },
+  productFieldVisibility: { type: Array, default: () => [] },
   sectionVisibility: { type: Object, required: true },
   sectionEditable: { type: Object, required: true },
-  columnEditable: { type: Object, required: true }
+  columnEditable: { type: Object, required: true },
+  columnVisibility: { type: Object, default: () => ({}) }
 })
 
 const STYLE_ID = 'cost-card-form-inline-style'
@@ -285,6 +287,22 @@ const expenseRows = ref([
   { expense_type: '财务费用', detail_name: '银行利息', amount: '2.20', ratio: '2.5%' },
   { expense_type: '总部分摊', detail_name: '行政分摊', amount: '1.50', ratio: '1.7%' }
 ])
+
+const visibleProductFields = computed(() => {
+  const visible = props.productFieldVisibility || []
+  if (!visible.length || visible.includes('*')) return PRODUCT_FIELDS
+  return PRODUCT_FIELDS.filter((item) => visible.includes(item.key))
+})
+
+function resolveVisibleColumns(section, allColumns) {
+  const visible = props.columnVisibility?.[section]
+  if (!Array.isArray(visible) || !visible.length || visible.includes('*')) return allColumns
+  return allColumns.filter((item) => visible.includes(item.key))
+}
+
+const materialVisibleColumns = computed(() => resolveVisibleColumns('material', materialColumns))
+const laborVisibleColumns = computed(() => resolveVisibleColumns('labor', laborColumns))
+const expenseVisibleColumns = computed(() => resolveVisibleColumns('expense', expenseColumns))
 
 function isSectionVisible(section) {
   return !!props.sectionVisibility?.[section]
