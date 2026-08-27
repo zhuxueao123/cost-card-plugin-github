@@ -104,15 +104,26 @@ function normalizeRecord(record) {
 
 function unwrapRecordData(record) {
   if (!record || typeof record !== 'object') return {}
+  let baseRecord = { ...record }
+
+  // Host APIs may wrap business fields under model/record/data/payload.
+  // Merge these known wrappers so field mapping can read a flat object.
+  for (const key of ['model', 'record', 'data', 'payload']) {
+    const nested = baseRecord[key]
+    if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+      baseRecord = { ...baseRecord, ...nested }
+    }
+  }
+
   const dataJson =
-    pickFirstObject(record, ['data_json', 'dataJson', 'json_data']) ||
+    pickFirstObject(baseRecord, ['data_json', 'dataJson', 'json_data']) ||
     null
 
   if (typeof dataJson === 'string') {
     try {
       const parsed = JSON.parse(dataJson)
       if (parsed && typeof parsed === 'object') {
-        return { ...record, ...parsed }
+        return { ...baseRecord, ...parsed }
       }
     }
     catch (_error) {
@@ -121,10 +132,10 @@ function unwrapRecordData(record) {
   }
 
   if (dataJson && typeof dataJson === 'object') {
-    return { ...record, ...dataJson }
+    return { ...baseRecord, ...dataJson }
   }
 
-  return record
+  return baseRecord
 }
 
 async function loadMainRecordByHostApi(recordId) {
