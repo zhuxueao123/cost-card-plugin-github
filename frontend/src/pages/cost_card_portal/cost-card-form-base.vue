@@ -199,7 +199,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watchEffect } from 'vue'
+import { computed, onMounted, reactive, ref, watch, watchEffect } from 'vue'
 
 const FORM_BASE_BUILD_TAG = '2026-08-28T01:05+08:00'
 console.info('[cost-card-form-base] build-tag', FORM_BASE_BUILD_TAG)
@@ -213,7 +213,8 @@ const props = defineProps({
   sectionEditable: { type: Object, required: true },
   columnEditable: { type: Object, required: true },
   columnVisibility: { type: Object, default: () => ({}) },
-  initialData: { type: Object, default: null }
+  initialData: { type: Object, default: null },
+  initialVersion: { type: Number, default: 0 }
 })
 
 const STYLE_ID = 'cost-card-form-inline-style'
@@ -481,6 +482,15 @@ watchEffect(() => {
   })
   applyInitialData(value)
 })
+
+watch(
+  () => props.initialVersion,
+  (version) => {
+    console.info('[cost-card-form-base] watch:initialVersion', { version })
+    applyInitialData(props.initialData)
+  },
+  { immediate: true }
+)
 
 function isSectionVisible(section) {
   return !!props.sectionVisibility?.[section]

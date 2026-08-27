@@ -5,6 +5,7 @@
   <CostCardFormBase
     v-else
     :key="formRenderKey"
+    :initial-version="formRenderVersion"
     scene-code="cc_create"
     :scene-title="runtimeSceneTitle"
     :product-editable="configState.productEditable"
