@@ -393,6 +393,10 @@ async function loadDetailRowsByCardNo(cardNo, entityCode) {
 
 async function loadById(recordId) {
   if (!recordId) return
+  if (isLoading.value) {
+    debugLog('loadById:skip-while-loading', { recordId })
+    return
+  }
   const loadToken = `${recordId}:${Date.now()}`
   activeLoadToken.value = loadToken
   debugLog('loadById:start', { recordId })
