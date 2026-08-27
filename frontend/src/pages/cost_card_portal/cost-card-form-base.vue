@@ -156,7 +156,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useHostDataApi } from '@trusteem/asapflow-plugin-sdk'
 
 const FORM_BASE_BUILD_TAG = '2026-08-28T02:45+08:00'
@@ -359,6 +359,19 @@ function applyInitialData(payload) {
     materialCount: materialRows.value.length,
     laborCount: laborRows.value.length,
     expenseCount: expenseRows.value.length
+  })
+
+  nextTick(() => {
+    const productInputs = Array.from(document.querySelectorAll('.product-grid input')).slice(0, 3).map((input) => ({
+      value: input.value,
+      attr: input.getAttribute('value')
+    }))
+    debugLog('applyInitialData:dom-check', {
+      product_code: product.value.product_code,
+      product_name: product.value.product_name,
+      productInputs,
+      summaryText: Array.from(document.querySelectorAll('.summary-card .amount')).slice(0, 4).map((node) => node.textContent)
+    })
   })
 }
 
