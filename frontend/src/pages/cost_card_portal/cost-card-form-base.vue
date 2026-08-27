@@ -12,7 +12,7 @@
         <label v-for="field in visibleProductFields" :key="field.key" class="field">
           <span>{{ field.label }}</span>
           <input
-            :value="product[field.key]"
+            :value="getProductField(field.key)"
             :readonly="!productEditable"
             @input="updateProductField(field.key, $event.target.value)"
           />
@@ -322,6 +322,10 @@ function updateProductField(fieldKey, value) {
     ...product.value,
     [fieldKey]: value
   }
+}
+
+function getProductField(fieldKey) {
+  return product.value?.[fieldKey] ?? ''
 }
 
 function updateRowField(section, rowIndex, fieldKey, value) {
