@@ -201,7 +201,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 
 const props = defineProps({
   sceneCode: { type: String, required: true },
@@ -211,7 +211,8 @@ const props = defineProps({
   sectionVisibility: { type: Object, required: true },
   sectionEditable: { type: Object, required: true },
   columnEditable: { type: Object, required: true },
-  columnVisibility: { type: Object, default: () => ({}) }
+  columnVisibility: { type: Object, default: () => ({}) },
+  initialData: { type: Object, default: null }
 })
 
 const STYLE_ID = 'cost-card-form-inline-style'
@@ -303,6 +304,37 @@ function resolveVisibleColumns(section, allColumns) {
 const materialVisibleColumns = computed(() => resolveVisibleColumns('material', materialColumns))
 const laborVisibleColumns = computed(() => resolveVisibleColumns('labor', laborColumns))
 const expenseVisibleColumns = computed(() => resolveVisibleColumns('expense', expenseColumns))
+
+function applyProductData(productData) {
+  if (!productData || typeof productData !== 'object') return
+  const keys = Object.keys(product)
+  for (const key of keys) {
+    if (key in productData && productData[key] !== undefined && productData[key] !== null) {
+      product[key] = String(productData[key])
+    }
+  }
+}
+
+function applyRowsData(targetRowsRef, rowsData) {
+  if (!Array.isArray(rowsData) || rowsData.length === 0) return
+  targetRowsRef.value = rowsData.map((row) => ({ ...row }))
+}
+
+function applyInitialData(payload) {
+  if (!payload || typeof payload !== 'object') return
+  applyProductData(payload.product || payload.model || {})
+  applyRowsData(materialRows, payload.materialRows || payload.material || payload.material_items)
+  applyRowsData(laborRows, payload.laborRows || payload.labor || payload.labor_items)
+  applyRowsData(expenseRows, payload.expenseRows || payload.expense || payload.expense_items)
+}
+
+watch(
+  () => props.initialData,
+  (value) => {
+    applyInitialData(value)
+  },
+  { deep: true, immediate: true }
+)
 
 function isSectionVisible(section) {
   return !!props.sectionVisibility?.[section]
