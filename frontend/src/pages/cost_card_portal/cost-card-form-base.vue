@@ -1,5 +1,6 @@
 <template>
   <section class="cost-card-page">
+    <div class="debug-tag">form-base {{ FORM_BASE_BUILD_TAG }}</div>
     <header class="scene-head">
       <h1>{{ sceneTitle }}</h1>
       <p>{{ sceneCode }}</p>
@@ -504,6 +505,7 @@ function isCellEditable(section, fieldKey) {
 
 const STYLE_TEXT = `
 .cost-card-page { min-height: 100vh; background: #f0f2f5; padding: 16px; color: #1f2937; }
+.debug-tag { position: sticky; top: 0; z-index: 10; display: inline-block; padding: 2px 8px; border-radius: 4px; border: 1px solid #bfdbfe; background: #eff6ff; color: #1d4ed8; font-size: 11px; margin-bottom: 8px; }
 .scene-head { display: flex; justify-content: space-between; align-items: end; margin-bottom: 12px; }
 .scene-head h1 { margin: 0; font-size: 22px; }
 .scene-head p { margin: 0; color: #6b7280; font-size: 12px; }

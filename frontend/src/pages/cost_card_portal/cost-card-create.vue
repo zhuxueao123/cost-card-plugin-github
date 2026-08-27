@@ -2,6 +2,13 @@
   <section v-if="shouldWaitForData" class="cost-card-loading">
     正在加载成本卡数据...
   </section>
+  <section class="cost-card-debug" v-if="currentRecordId">
+    <span>debug</span>
+    <span>wait={{ shouldWaitForData ? 'Y' : 'N' }}</span>
+    <span>ver={{ formRenderVersion }}</span>
+    <span>code={{ loadedData?.product?.product_code || '-' }}</span>
+    <span>name={{ loadedData?.product?.product_name || '-' }}</span>
+  </section>
   <CostCardFormBase
     v-else
     :key="formRenderKey"
@@ -460,5 +467,17 @@ onActivated(async () => {
   place-items: center;
   color: #475569;
   font-size: 14px;
+}
+
+.cost-card-debug {
+  display: flex;
+  gap: 10px;
+  padding: 6px 10px;
+  margin: 8px 0;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  color: #334155;
+  font-size: 12px;
+  background: #f8fafc;
 }
 </style>
