@@ -1,17 +1,113 @@
 {
   "pluginCode": "cost_card_portal",
-  "pluginName": "电子成本卡报表页面插件",
+  "pluginName": "电子成本卡表单页面插件",
   "version": "0.1.0",
   "pages": [
     {
-      "code": "cost-card-report",
-      "displayName": "成本卡报表",
+      "code": "cost-card-create",
+      "displayName": "成本卡创建",
       "route": {
-        "name": "plugin-cost-card-report",
-        "path": "/plugins/cost-card/report"
+        "name": "plugin-cost-card-create",
+        "path": "/plugins/cost-card/create"
       },
-      "entry": "./cost-card-report.vue",
-      "bundle": "cost-card-report.es.js",
+      "entry": "./cost-card-create.vue",
+      "bundle": "cost-card-create.es.js",
+      "entryExport": "default",
+      "propsSchema": {
+        "type": "object"
+      },
+      "permissions": [],
+      "hostFeatures": [
+        "electronic_cost_card"
+      ],
+      "layout": {
+        "fullWidth": true
+      },
+      "metadata": {
+        "icon": "insights"
+      }
+    },
+    {
+      "code": "cost-card-material-maint",
+      "displayName": "材料成本维护",
+      "route": {
+        "name": "plugin-cost-card-material-maint",
+        "path": "/plugins/cost-card/material"
+      },
+      "entry": "./cost-card-material-maint.vue",
+      "bundle": "cost-card-material-maint.es.js",
+      "entryExport": "default",
+      "propsSchema": {
+        "type": "object"
+      },
+      "permissions": [],
+      "hostFeatures": [
+        "electronic_cost_card"
+      ],
+      "layout": {
+        "fullWidth": true
+      },
+      "metadata": {
+        "icon": "insights"
+      }
+    },
+    {
+      "code": "cost-card-labor-maint",
+      "displayName": "人工成本维护",
+      "route": {
+        "name": "plugin-cost-card-labor-maint",
+        "path": "/plugins/cost-card/labor"
+      },
+      "entry": "./cost-card-labor-maint.vue",
+      "bundle": "cost-card-labor-maint.es.js",
+      "entryExport": "default",
+      "propsSchema": {
+        "type": "object"
+      },
+      "permissions": [],
+      "hostFeatures": [
+        "electronic_cost_card"
+      ],
+      "layout": {
+        "fullWidth": true
+      },
+      "metadata": {
+        "icon": "insights"
+      }
+    },
+    {
+      "code": "cost-card-expense-maint",
+      "displayName": "费用成本维护",
+      "route": {
+        "name": "plugin-cost-card-expense-maint",
+        "path": "/plugins/cost-card/expense"
+      },
+      "entry": "./cost-card-expense-maint.vue",
+      "bundle": "cost-card-expense-maint.es.js",
+      "entryExport": "default",
+      "propsSchema": {
+        "type": "object"
+      },
+      "permissions": [],
+      "hostFeatures": [
+        "electronic_cost_card"
+      ],
+      "layout": {
+        "fullWidth": true
+      },
+      "metadata": {
+        "icon": "insights"
+      }
+    },
+    {
+      "code": "cost-card-countersign-review",
+      "displayName": "会签审核",
+      "route": {
+        "name": "plugin-cost-card-countersign-review",
+        "path": "/plugins/cost-card/review"
+      },
+      "entry": "./cost-card-countersign-review.vue",
+      "bundle": "cost-card-countersign-review.es.js",
       "entryExport": "default",
       "propsSchema": {
         "type": "object"

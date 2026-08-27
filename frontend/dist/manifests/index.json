@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-08-27T05:54:27.180Z",
+  "generatedAt": "2026-08-27T10:01:15.700Z",
   "plugins": [
     {
       "pluginCode": "cost_card_portal",
-      "pluginName": "电子成本卡报表页面插件",
+      "pluginName": "电子成本卡表单页面插件",
       "version": "0.1.0",
       "manifest": "manifests/cost_card_portal.json",
-      "pages": 1
+      "pages": 5
     }
   ]
 }
