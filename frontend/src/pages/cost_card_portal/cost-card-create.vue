@@ -13,29 +13,39 @@
 </template>
 
 <script setup>
-import { computed, onActivated, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useHostDataApi, usePluginContext } from '@trusteem/asapflow-plugin-sdk'
 import CostCardFormBase from './cost-card-form-base.vue'
 import { COST_CARD_DEFAULT_SCENES, useCostCardSceneConfig } from './use-cost-card-scene-config'
 
 const { configState, sceneTitle } = useCostCardSceneConfig('cc_create', COST_CARD_DEFAULT_SCENES.cc_create)
+const pluginContext = usePluginContext()
+const hostDataApi = useHostDataApi()
 
 const loadedData = ref(null)
-const currentRecordId = ref('')
+const currentRecordId = computed(() => {
+  const routeQuery = pluginContext.query.value || {}
+  const candidates = [
+    pluginContext.recordId.value,
+    routeQuery.id,
+    routeQuery.recordId,
+    routeQuery.rowId,
+    routeQuery.pk,
+    routeQuery.key,
+    routeQuery.card_no
+  ]
+  for (const value of candidates) {
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      return String(value).trim()
+    }
+  }
+  return ''
+})
 
 const runtimeSceneTitle = computed(() => {
   if (currentRecordId.value) return '成本卡编辑'
   return sceneTitle.value || '成本卡创建'
 })
-
-function safeParseJson(text) {
-  if (!text || typeof text !== 'string') return null
-  try {
-    return JSON.parse(text)
-  }
-  catch (_error) {
-    return null
-  }
-}
 
 function pickFirstObject(source, candidateKeys) {
   if (!source || typeof source !== 'object') return null
@@ -45,55 +55,6 @@ function pickFirstObject(source, candidateKeys) {
     }
   }
   return null
-}
-
-function getPayloadObjectFromLocation(url) {
-  const payloadLike =
-    url.searchParams.get('payload') ||
-    url.searchParams.get('playload') ||
-    url.searchParams.get('query') ||
-    ''
-  const parsed = safeParseJson(payloadLike)
-  return parsed && typeof parsed === 'object' ? parsed : null
-}
-
-function getPayloadObjectFromHistoryState() {
-  const state = globalThis?.history?.state
-  if (!state || typeof state !== 'object') return null
-  const direct = pickFirstObject(state, ['payload', 'playload', 'query'])
-  if (direct && typeof direct === 'object') return direct
-  if (typeof direct === 'string') {
-    const parsed = safeParseJson(direct)
-    if (parsed && typeof parsed === 'object') return parsed
-  }
-  return null
-}
-
-function getRecordIdFromLocation() {
-  const href = String(globalThis?.location?.href || '')
-  if (!href) return ''
-  const url = new URL(href)
-
-  const hashQuery = String(url.hash || '').includes('?')
-    ? String(url.hash || '').slice(String(url.hash || '').indexOf('?') + 1)
-    : ''
-  const hashParams = new URLSearchParams(hashQuery)
-
-  const payloadObj = getPayloadObjectFromLocation(url) || getPayloadObjectFromHistoryState() || {}
-
-  return (
-    url.searchParams.get('id') ||
-    url.searchParams.get('recordId') ||
-    url.searchParams.get('rowId') ||
-    url.searchParams.get('pk') ||
-    url.searchParams.get('key') ||
-    url.searchParams.get('card_no') ||
-    hashParams.get('id') ||
-    hashParams.get('recordId') ||
-    hashParams.get('rowId') ||
-    pickFirstObject(payloadObj, ['id', 'recordId', 'rowId', 'pk', 'key', 'card_no']) ||
-    ''
-  )
 }
 
 function normalizeJsonPayload(payload) {
@@ -126,9 +87,14 @@ function unwrapRecordData(record) {
     null
 
   if (typeof dataJson === 'string') {
-    const parsed = safeParseJson(dataJson)
-    if (parsed && typeof parsed === 'object') {
-      return { ...record, ...parsed }
+    try {
+      const parsed = JSON.parse(dataJson)
+      if (parsed && typeof parsed === 'object') {
+        return { ...record, ...parsed }
+      }
+    }
+    catch (_error) {
+      // keep original record when data_json is not valid JSON
     }
   }
 
@@ -139,21 +105,18 @@ function unwrapRecordData(record) {
   return record
 }
 
-async function tryFetchJson(url, options) {
-  const resp = await fetch(url, options)
-  if (!resp.ok) return null
-  return resp.json()
-}
-
 async function loadMainRecordByHostApi(recordId) {
   if (!recordId) return null
 
   const entityCandidates = ['electronic_cost_card', 'cost_card']
   for (const entity of entityCandidates) {
-    const payload = await tryFetchJson(`/api/data/${entity}/${encodeURIComponent(recordId)}`, {
-      method: 'GET',
-      credentials: 'include'
-    })
+    let payload = null
+    try {
+      payload = await hostDataApi.getRecord(entity, recordId)
+    }
+    catch (_error) {
+      continue
+    }
 
     const normalized = normalizeJsonPayload(payload)
     if (normalized && (normalized.record || normalized.model || normalized.id || normalized.product_code)) {
@@ -165,44 +128,7 @@ async function loadMainRecordByHostApi(recordId) {
 }
 
 async function loadMainRecord(recordId) {
-  const hostRecord = await loadMainRecordByHostApi(recordId)
-  if (hostRecord) return hostRecord
-
-  const requestBodies = [
-    { entityCode: 'cost_card', recordId },
-    { entityCode: 'cost_card', id: recordId },
-    {
-      entityCode: 'cost_card',
-      filters: { id: recordId },
-      pageIndex: 0,
-      pageSize: 1
-    },
-    {
-      entityCode: 'cost_card',
-      filters: [{ field: 'id', operator: 'eq', value: recordId }],
-      pageIndex: 0,
-      pageSize: 1
-    }
-  ]
-
-  for (const body of requestBodies) {
-    const endpoint = 'filters' in body ? '/api/data/query-records' : '/api/data/get-record'
-    const payload = await tryFetchJson(endpoint, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    })
-    const normalized = normalizeJsonPayload(payload)
-    const rows = normalized?.records || normalized?.items || normalized?.rows || normalized?.data
-    const firstRow = Array.isArray(rows) && rows.length ? rows[0] : null
-    if (firstRow && typeof firstRow === 'object') return firstRow
-    if (normalized && (normalized.record || normalized.model || normalized.id || normalized.product_code)) {
-      return normalized.record || normalized.model || normalized
-    }
-  }
-
-  return null
+  return loadMainRecordByHostApi(recordId)
 }
 
 function normalizeDetailRow(row, section) {
@@ -249,13 +175,11 @@ async function loadDetailRowsByCardNo(cardNo, entityCode) {
 
   const queryBodies = [
     {
-      entityCode,
       filters: { card_no: cardNo },
       pageIndex: 0,
       pageSize: 500
     },
     {
-      entityCode,
       filters: [{ field: 'card_no', operator: 'eq', value: cardNo }],
       pageIndex: 0,
       pageSize: 500
@@ -263,12 +187,14 @@ async function loadDetailRowsByCardNo(cardNo, entityCode) {
   ]
 
   for (const body of queryBodies) {
-    const payload = await tryFetchJson('/api/data/query-records', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    })
+    let payload = null
+    try {
+      payload = await hostDataApi.queryRecords(entityCode, body)
+    }
+    catch (_error) {
+      continue
+    }
+
     const normalized = normalizeJsonPayload(payload)
     const rows = normalized?.records || normalized?.items || normalized?.rows || normalized?.data
     if (Array.isArray(rows)) return rows
@@ -286,8 +212,6 @@ async function loadById(recordId) {
   const cardNo =
     normalizedMain.card_no ||
     normalizedMain.cardNo ||
-    normalizedMain.product_code ||
-    normalizedMain.productCode ||
     ''
   const [materialRows, laborRows, expenseRows] = await Promise.all([
     loadDetailRowsByCardNo(cardNo, 'cost_card_material'),
@@ -309,28 +233,15 @@ async function loadById(recordId) {
   }
 }
 
-async function syncFromLocation() {
-  const recordId = getRecordIdFromLocation()
-  currentRecordId.value = recordId
-  if (!recordId) {
-    loadedData.value = null
-    return
-  }
-  await loadById(recordId)
-}
-
-onMounted(async () => {
-  await syncFromLocation()
-  globalThis?.addEventListener?.('hashchange', syncFromLocation)
-  globalThis?.addEventListener?.('popstate', syncFromLocation)
-})
-
-onActivated(() => {
-  void syncFromLocation()
-})
-
-onBeforeUnmount(() => {
-  globalThis?.removeEventListener?.('hashchange', syncFromLocation)
-  globalThis?.removeEventListener?.('popstate', syncFromLocation)
-})
+watch(
+  currentRecordId,
+  async (recordId) => {
+    if (!recordId) {
+      loadedData.value = null
+      return
+    }
+    await loadById(recordId)
+  },
+  { immediate: true }
+)
 </script>

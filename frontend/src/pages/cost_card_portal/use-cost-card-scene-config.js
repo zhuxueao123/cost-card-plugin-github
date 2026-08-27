@@ -92,20 +92,35 @@ export function useCostCardSceneConfig(sceneCode, fallbackConfig) {
   const loadError = ref(false)
   const configState = ref(normalizeSceneConfig(sceneCode, fallbackConfig))
 
-  async function loadScenarioConfig() {
+  function resolveInjectedFeatures() {
+    const candidates = [
+      globalThis?.__ASAPFLOW_FEATURES__,
+      globalThis?.ASAPFLOW_FEATURES,
+      globalThis?.__PLUGIN_FEATURES__
+    ]
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate)) return candidate
+      if (candidate && Array.isArray(candidate.data)) return candidate.data
+    }
+    return []
+  }
+
+  function loadScenarioConfig() {
     loadError.value = false
     try {
-      const featureListResp = await fetch('/api/meta/features', { credentials: 'include' })
-      if (!featureListResp.ok) throw new Error('feature list request failed')
-
-      const payload = await featureListResp.json()
-      const features = Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : []
+      const features = resolveInjectedFeatures()
       const feature = features.find((item) => item?.code === FEATURE_CODE)
-      if (!feature) throw new Error('feature not found')
+      if (!feature) {
+        configState.value = normalizeSceneConfig(sceneCode, fallbackConfig)
+        return
+      }
 
       const scenarios = Array.isArray(feature.scenarios) ? feature.scenarios : []
       const currentScenario = scenarios.find((item) => item?.code === sceneCode)
-      if (!currentScenario?.metadata) return
+      if (!currentScenario?.metadata) {
+        configState.value = normalizeSceneConfig(sceneCode, fallbackConfig)
+        return
+      }
 
       const metadata = typeof currentScenario.metadata === 'string'
         ? JSON.parse(currentScenario.metadata)
@@ -121,8 +136,8 @@ export function useCostCardSceneConfig(sceneCode, fallbackConfig) {
     }
   }
 
-  onMounted(async () => {
-    await loadScenarioConfig()
+  onMounted(() => {
+    loadScenarioConfig()
   })
 
   return {

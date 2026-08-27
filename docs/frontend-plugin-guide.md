@@ -86,5 +86,160 @@ t('pages.dashboard_title')
 
 ## 6. 进一步阅读
 
+- 场景动作跳插件页面时，AI 需注意以下边界：
+  - 插件页面路由名取自 `manifest.json -> pages[].route.name`，配置动作跳转时必须使用这个真实值。
+  - 如果场景动作 `metadata.navigation.type` 配成 `scenario-form`，前端只会跳平台内置业务表单页，不会跳插件页面。
+  - 要跳插件页面，应使用 `metadata.navigation.type = "custom-page"`。
+  - 当前记录、来源功能、来源场景等动态参数应写在 `metadata.navigation.payload` 中，使用 `@row.id`、`@context.featureCode` 这类占位符；不要使用 `{{row.id}}`。
+  - 当前前端只会解析 `payload` 中的 `@...` 占位符，再把结果合并到最终 URL query；如果把 `@row.id` 直接写在 `navigation.query`，它会原样出现在 URL 中。
+  - 如果是修改“某个场景中的某个按钮跳转到插件页面”，应更新场景动作绑定，而不是只更新动作定义。CLI 上通常应走 `system update-scenario`，不是 `system update-action`。
+
+## 7. 插件页面调用宿主 API 的约定
+
+- 前端插件页面不要直接使用绝对地址调用宿主 API，例如 `http://host:port/api/...`。
+  原因：这样很容易绕过宿主前端现有的登录态与请求拦截器，导致 `401 Unauthorized`。
+
+- 前端插件页面不要自行猜测宿主接口路径，例如直接调用 `/api/data/get-record`。
+  说明：应优先复用宿主当前已使用的数据接口语义和路径，不要发明新的别名路径。
+
+- 宿主前端当前会在统一 `api` 实例上自动追加 `Authorization: Bearer <token>`。
+  如果插件页面没有复用宿主的鉴权请求通道，而是自己 `fetch(...)` 或自己创建 `axios` 实例，请求通常不会自动携带 token。
+
+- 读取单条业务记录时，应对齐宿主当前数据接口：
+  - 单条读取：`GET /api/data/{entityCode}/{recordId}`
+  - 列表查询：`POST /api/data/{entityCode}/query`
+  - 新增记录：`POST /api/data/{entityCode}`
+  - 更新记录：`PUT /api/data/{entityCode}/{recordId}`
+
+- 如果插件页面需要根据场景动作传入的 URL 参数读取记录，应先从路由 query 中取 `id` 或 `recordId`，再按宿主数据接口读取该记录。
+
+- 如无明确 SDK 能力说明，不要假设 `plugins-sdk` 中的 `useApi()` 已经可用。
+- 当前仓库已在宿主前端通过 `frontend/src/boot/plugin-sdk.js` 注入桥接层，插件页面应优先通过 `@trusteem/asapflow-plugin-sdk` 获取能力，不要绕过宿主直接造请求。
+- `plugins-sdk` 当前已提供：
+  - `useApi()`：宿主统一 axios 实例，自动带 `Authorization` 与 `X-Locale`
+  - `useAuthContext()`：当前用户、claims、roles、permissions、`isAuthenticated`、`refresh()`
+  - `useRouteContext()` / `usePluginContext()`：当前路由、query、插件页元数据、来源场景参数
+  - `useHostDataApi()`：面向 `/api/data/{entityCode}` 的标准 CRUD 包装
+- 若插件页面需要当前登录人信息，先用 `useAuthContext()`，不要自行维护 token 或重复实现 `/identity/whoami` 调用。
+  AI 需要先核对当前宿主是否已接入 `frontend/src/boot/plugin-sdk.js`，再决定这些能力在运行时是否可用。
+
+### 7.1 AI 调用 SDK 的固定规则
+
+- 先确认当前开发目录是不是完整仓库，还是单独下发的 `plugin-workspace/`。
+  - 如果是客户机器上的独立 `plugin-workspace/`，默认安装方式应为：`npm install @trusteem/asapflow-plugin-sdk`
+  - 如果是完整 AsapFlow 仓库，允许临时使用 `"@trusteem/asapflow-plugin-sdk": "file:../../plugins-sdk"` 做源码联调
+  - 只有在 npm 不可达时，才回退到 tarball 或本地目录方式
+
+- 先检查宿主是否已接入桥接：
+  - `frontend/quasar.config.js` 的 `boot` 中应包含 `plugin-sdk`
+  - `frontend/src/boot/plugin-sdk.js` 应存在
+  - 若不存在，不要假设 SDK 在运行时一定可用，应先补宿主桥接
+
+- 再检查前端插件工程里 SDK 包是否真实可解析：
+  - 查看 `node_modules/@trusteem/asapflow-plugin-sdk/package.json` 是否存在
+  - 查看其 `exports` 是否导出 `./index.js`
+  - 若使用 npm 安装，优先确认 `package.json` 中已声明 `@trusteem/asapflow-plugin-sdk`
+  - 如依赖来自 `file:../../plugins-sdk`，需继续确认该相对路径在当前机器上真实存在
+  - 如果这里只是坏软链、坏 junction、缺失目录或未安装依赖，先修复包，再改业务代码
+
+- 插件页读取当前用户时，优先这样写：
+
+```js
+import { useAuthContext } from '@trusteem/asapflow-plugin-sdk'
+
+const { user, claims, roles, permissions, isAuthenticated, refresh } = useAuthContext()
+```
+
+- 插件页读取场景动作传入参数时，优先这样写：
+
+```js
+import { usePluginContext } from '@trusteem/asapflow-plugin-sdk'
+
+const { recordId, mode, featureCode, scenarioCode, query } = usePluginContext()
+```
+
+- 插件页读取宿主业务数据时，优先这样写：
+
+```js
+import { useHostDataApi, usePluginContext } from '@trusteem/asapflow-plugin-sdk'
+
+const { recordId } = usePluginContext()
+const { getRecord, queryRecords, createRecord, updateRecord, deleteRecord } = useHostDataApi()
+
+const record = await getRecord('electronic_cost_card', recordId.value)
+```
+
+- 如果只是想调用宿主统一请求实例，也可以这样写：
+
+```js
+import { useApi } from '@trusteem/asapflow-plugin-sdk'
+
+const api = useApi()
+const { data } = await api.get('/identity/whoami')
+```
+
+- 不要这样做：
+  - 不要直接 `fetch('http://host:port/api/...')`
+  - 不要自己新建 axios 实例去打宿主接口
+  - 不要自行拼 `/api/data/get-record`
+  - 不要把用户 token 存到插件自己的状态里
+
+- 当场景动作把 `id` / `recordId` 通过路由 query 传进来时，插件页应从 `usePluginContext()` 读取，而不是自己解析 `window.location.href`
+
+- 若插件页报 `401 Unauthorized`，AI 排查顺序应固定为：
+  1. 是否用了 `useApi()` 或 `useHostDataApi()`
+  2. 是否误调了不存在的宿主接口路径
+  3. 是否在宿主页面内加载，而不是脱离宿主单独打开插件 bundle
+  4. 宿主当前登录态是否已过期
+
+### 7.2 `plugin-workspace` 场景的额外约束
+
+- 如果 AI 工作目录是客户机器上的 `plugin-workspace/`，默认前提应改为“从 npm 安装 SDK”，不要默认它旁边一定有 `plugins-sdk/`。
+- 客户侧推荐依赖写法：
+
+```json
+{
+  "dependencies": {
+    "@trusteem/asapflow-plugin-sdk": "^0.1.0"
+  }
+}
+```
+
+- 当前仓库里的 `plugins/frontend/package.json` 仍可能使用本地文件依赖做源码联调：
+
+```json
+{
+  "dependencies": {
+    "@trusteem/asapflow-plugin-sdk": "file:../../plugins-sdk"
+  }
+}
+```
+
+- 这意味着只有在如下目录结构下依赖才天然可用：
+
+```text
+<root>/
+  plugin-workspace/
+    frontend/
+```
+
+- 如果客户环境只下发了 `plugin-workspace/`，这是正常情况；只要能访问 npm Registry，并先执行：
+
+```bash
+npm install @trusteem/asapflow-plugin-sdk
+```
+
+  就不需要再额外复制 `plugins-sdk/`。
+
+- 因此 AI 在 `plugin-workspace` 中应先判断以下两件事，再决定是否改用 SDK：
+  1. `package.json` 是否已经声明 `@trusteem/asapflow-plugin-sdk`
+  2. `node_modules/@trusteem/asapflow-plugin-sdk` 是否已成功安装且能读取包导出
+
+- 如果这两个条件不成立，正确顺序是：
+  1. 先执行 `npm install @trusteem/asapflow-plugin-sdk`
+  2. 如果 npm 不可达，再改用 tarball 或本地目录
+  2. 再改插件页面代码
+  3. 最后再跑构建验证
+
 - UI 控制协议见 [plugin-ui-protocol.md](/Users/mac4/Workspace/AsapFlow/plugins/docs/plugin-ui-protocol.md)
 - 完整联调链路见 [plugin-e2e-examples.md](/Users/mac4/Workspace/AsapFlow/plugins/docs/plugin-e2e-examples.md)

@@ -7,7 +7,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@trusteem/asapflow-plugin-sdk": "file:../../plugins-sdk"
+    "@trusteem/asapflow-plugin-sdk": "^0.1.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",

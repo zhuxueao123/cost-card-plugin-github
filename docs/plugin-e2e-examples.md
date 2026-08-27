@@ -159,6 +159,13 @@ npm run build
 
 1. 打开 `supplier_portal` 页面
 2. 确认页面文案跟随当前语言
+3. 如果页面会读取宿主业务数据，不要直接请求绝对地址 `http://host/api/...`
+4. 应确认页面通过宿主鉴权通道调用 API，并使用宿主当前实际接口路径
+5. 若出现 `401 Unauthorized`，优先检查是否绕过了宿主统一 `api` 实例，或误用了自定义接口路径如 `/api/data/get-record`
+6. 建议优先使用 `@trusteem/asapflow-plugin-sdk`：
+   - `usePluginContext()` 取 `recordId`
+   - `useHostDataApi().getRecord(entityCode, recordId)` 取单条记录
+   - `useAuthContext()` 取当前用户与权限
 
 ## 8. 语言资源约定
 
