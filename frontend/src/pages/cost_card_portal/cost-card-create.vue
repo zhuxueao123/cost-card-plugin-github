@@ -1,5 +1,9 @@
 <template>
+  <section v-if="shouldWaitForData" class="cost-card-loading">
+    正在加载成本卡数据...
+  </section>
   <CostCardFormBase
+    v-else
     :key="formRenderKey"
     scene-code="cc_create"
     :scene-title="runtimeSceneTitle"
@@ -32,6 +36,7 @@ function debugLog(stage, payload) {
 const loadedData = ref(null)
 const formRenderVersion = ref(0)
 const formRenderKey = computed(() => `${currentRecordId.value || 'new'}:${formRenderVersion.value}`)
+const shouldWaitForData = computed(() => !!currentRecordId.value && !loadedData.value)
 const currentRecordId = computed(() => {
   const routeQuery = pluginContext.query.value || {}
   const candidates = [
@@ -397,11 +402,27 @@ async function loadById(recordId) {
       : undefined
   }
   formRenderVersion.value += 1
+  const productSnapshot = loadedData.value?.product && typeof loadedData.value.product === 'object'
+    ? {
+      product_code: loadedData.value.product.product_code,
+      version_no: loadedData.value.product.version_no,
+      product_name: loadedData.value.product.product_name,
+      factory: loadedData.value.product.factory,
+      product_category: loadedData.value.product.product_category,
+      customer_name: loadedData.value.product.customer_name,
+      tax_rate: loadedData.value.product.tax_rate,
+      quoted_price_tax: loadedData.value.product.quoted_price_tax,
+      sales_revenue: loadedData.value.product.sales_revenue,
+      rebate_rate: loadedData.value.product.rebate_rate,
+      account_period_days: loadedData.value.product.account_period_days,
+      freight_amount: loadedData.value.product.freight_amount
+    }
+    : null
   debugLog('loadById:done', {
     recordId,
     cardNo,
     formRenderVersion: formRenderVersion.value,
-    product: loadedData.value.product,
+    product: productSnapshot,
     materialCount: loadedData.value.materialRows?.length || 0,
     laborCount: loadedData.value.laborRows?.length || 0,
     expenseCount: loadedData.value.expenseRows?.length || 0
@@ -430,3 +451,13 @@ onActivated(async () => {
   await loadById(recordId)
 })
 </script>
+
+<style scoped>
+.cost-card-loading {
+  min-height: 50vh;
+  display: grid;
+  place-items: center;
+  color: #475569;
+  font-size: 14px;
+}
+</style>
