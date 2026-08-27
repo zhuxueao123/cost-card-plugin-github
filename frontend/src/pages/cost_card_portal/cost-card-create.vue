@@ -12,6 +12,7 @@
     <span v-if="lastLoadError">err={{ lastLoadError }}</span>
   </section>
   <CostCardFormBase
+    v-if="shouldRenderForm"
     :key="formRenderKey"
     :initial-version="formRenderVersion"
     scene-code="cc_create"
@@ -27,7 +28,7 @@
 </template>
 
 <script setup>
-import { computed, onActivated, ref, watch } from 'vue'
+import { computed, nextTick, onActivated, ref, watch } from 'vue'
 import { useHostDataApi, usePluginContext } from '@trusteem/asapflow-plugin-sdk'
 import CostCardFormBase from './cost-card-form-base.vue'
 import { COST_CARD_DEFAULT_SCENES, useCostCardSceneConfig } from './use-cost-card-scene-config'
@@ -71,6 +72,7 @@ const isLoading = ref(false)
 const lastLoadError = ref('')
 const formRenderVersion = ref(0)
 const activeLoadToken = ref('')
+const shouldRenderForm = ref(true)
 const formRenderKey = computed(() => `${currentRecordId.value || 'new'}:${formRenderVersion.value}`)
 const showLoadingMask = computed(() => !!currentRecordId.value && isLoading.value && formRenderVersion.value === 0)
 const currentRecordId = computed(() => {
@@ -214,6 +216,24 @@ function unwrapRecordData(record) {
   }
 
   return baseRecord
+}
+
+async function commitLoadedData(payload, reason) {
+  loadedData.value = payload
+  formRenderVersion.value += 1
+  shouldRenderForm.value = false
+  await nextTick()
+  shouldRenderForm.value = true
+  await nextTick()
+  debugLog('commitLoadedData', {
+    reason,
+    formRenderVersion: formRenderVersion.value,
+    productCode: loadedData.value?.product?.product_code || '',
+    productName: loadedData.value?.product?.product_name || '',
+    materialCount: loadedData.value?.materialRows?.length || 0,
+    laborCount: loadedData.value?.laborRows?.length || 0,
+    expenseCount: loadedData.value?.expenseRows?.length || 0
+  })
 }
 
 async function loadMainRecordByHostApi(recordId) {
@@ -424,13 +444,12 @@ async function loadById(recordId) {
   try {
     const mainRecord = await loadMainRecord(recordId)
     if (!mainRecord) {
-      loadedData.value = {
+      await commitLoadedData({
         product: {},
         materialRows: [],
         laborRows: [],
         expenseRows: []
-      }
-      formRenderVersion.value += 1
+      }, 'main-empty')
       debugLog('loadById:main-empty', { recordId })
       return
     }
@@ -467,7 +486,7 @@ async function loadById(recordId) {
       debugLog('detail:query:error', { entityCode: 'cost_card_expense', error: String(expenseResult.reason) })
     }
 
-    loadedData.value = {
+    await commitLoadedData({
       product: normalizeRecord(normalizedMain),
       materialRows: Array.isArray(materialRows)
         ? materialRows.map((row, index) => {
@@ -490,8 +509,7 @@ async function loadById(recordId) {
           return normalized
         })
         : []
-    }
-    formRenderVersion.value += 1
+    }, 'load-success')
     const productSnapshot = loadedData.value?.product && typeof loadedData.value.product === 'object'
       ? {
         product_code: loadedData.value.product.product_code,
@@ -519,13 +537,12 @@ async function loadById(recordId) {
     })
   }
   catch (error) {
-    loadedData.value = {
+    await commitLoadedData({
       product: {},
       materialRows: [],
       laborRows: [],
       expenseRows: []
-    }
-    formRenderVersion.value += 1
+    }, 'load-error')
     lastLoadError.value = error instanceof Error ? error.message : String(error)
     debugLog('loadById:error', { recordId, error: lastLoadError.value })
   }
@@ -543,15 +560,14 @@ watch(
   async (recordId) => {
     debugLog('watch:currentRecordId', { recordId })
     if (!recordId) {
-      loadedData.value = {
+      await commitLoadedData({
         product: {},
         materialRows: [],
         laborRows: [],
         expenseRows: []
-      }
+      }, 'clear-record-id')
       isLoading.value = false
       lastLoadError.value = ''
-      formRenderVersion.value += 1
       debugLog('watch:clear-loaded-data', null)
       return
     }
