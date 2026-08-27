@@ -14,6 +14,7 @@
   <CostCardFormBase
     v-if="shouldRenderForm"
     :key="formRenderKey"
+    :record-id="currentRecordId"
     :initial-version="formRenderVersion"
     :initial-data-json="serializedInitialData"
     scene-code="cc_create"

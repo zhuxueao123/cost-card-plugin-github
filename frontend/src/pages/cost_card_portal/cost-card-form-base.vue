@@ -201,6 +201,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useHostDataApi } from '@trusteem/asapflow-plugin-sdk'
 
 const FORM_BASE_BUILD_TAG = '2026-08-28T01:05+08:00'
 console.info('[cost-card-form-base] build-tag', FORM_BASE_BUILD_TAG)
@@ -208,6 +209,7 @@ console.info('[cost-card-form-base] build-tag', FORM_BASE_BUILD_TAG)
 const props = defineProps({
   sceneCode: { type: String, required: true },
   sceneTitle: { type: String, required: true },
+  recordId: { type: String, default: '' },
   productEditable: { type: Boolean, default: false },
   productFieldVisibility: { type: Array, default: () => [] },
   sectionVisibility: { type: Object, required: true },
@@ -218,6 +220,10 @@ const props = defineProps({
   initialDataJson: { type: String, default: '' },
   initialVersion: { type: Number, default: 0 }
 })
+
+const hostDataApi = useHostDataApi()
+const MAIN_ENTITY_CODE = 'cost_card'
+const REQUEST_TIMEOUT_MS = 8000
 
 const STYLE_ID = 'cost-card-form-inline-style'
 
@@ -480,6 +486,288 @@ function applyInitialData(payload) {
   })
 }
 
+function debugLog(stage, payload) {
+  console.info(`[cost-card-form-base] ${stage}`, payload)
+}
+
+function withTimeout(promise, label, timeoutMs = REQUEST_TIMEOUT_MS) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`${label} timeout after ${timeoutMs}ms`))
+    }, timeoutMs)
+    Promise.resolve(promise)
+      .then((value) => {
+        clearTimeout(timer)
+        resolve(value)
+      })
+      .catch((error) => {
+        clearTimeout(timer)
+        reject(error)
+      })
+  })
+}
+
+function pickFirstObject(source, candidateKeys) {
+  if (!source || typeof source !== 'object') return null
+  for (const key of candidateKeys) {
+    if (key in source && source[key] !== undefined && source[key] !== null && source[key] !== '') {
+      return source[key]
+    }
+  }
+  return null
+}
+
+function hasValue(value) {
+  return value !== undefined && value !== null && value !== ''
+}
+
+function mergeWithoutOverwritingPrimary(primary, secondary) {
+  if (!secondary || typeof secondary !== 'object') return { ...primary }
+  const merged = { ...primary }
+  for (const [key, value] of Object.entries(secondary)) {
+    if (!Object.prototype.hasOwnProperty.call(merged, key) || !hasValue(merged[key])) {
+      merged[key] = value
+    }
+  }
+  return merged
+}
+
+function normalizeJsonPayload(payload) {
+  if (!payload || typeof payload !== 'object') return null
+  if (payload.data && typeof payload.data === 'object') return payload.data
+  if (payload.payload && typeof payload.payload === 'object') return payload.payload
+  return payload
+}
+
+function extractRowsFromPayload(payload) {
+  const normalized = normalizeJsonPayload(payload)
+  const rows = normalized?.records || normalized?.items || normalized?.rows || normalized?.data
+  return Array.isArray(rows) ? rows : []
+}
+
+function unwrapRecordData(record) {
+  if (!record || typeof record !== 'object') return {}
+  let baseRecord = { ...record }
+  for (const key of ['model', 'record', 'data', 'payload']) {
+    const nested = baseRecord[key]
+    if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+      baseRecord = { ...baseRecord, ...nested }
+    }
+  }
+
+  const dataJson = pickFirstObject(baseRecord, ['data_json', 'dataJson', 'json_data']) || null
+  if (typeof dataJson === 'string') {
+    try {
+      const parsed = JSON.parse(dataJson)
+      if (parsed && typeof parsed === 'object') {
+        return mergeWithoutOverwritingPrimary(baseRecord, parsed)
+      }
+    }
+    catch (_error) {
+      return baseRecord
+    }
+  }
+
+  if (dataJson && typeof dataJson === 'object') {
+    return mergeWithoutOverwritingPrimary(baseRecord, dataJson)
+  }
+
+  return baseRecord
+}
+
+function normalizeRecord(record) {
+  if (!record || typeof record !== 'object') return {}
+  const anyRecord = unwrapRecordData(record)
+  const pick = (keys) => pickFirstObject(anyRecord, keys)
+
+  return {
+    product_code: pick(['product_code', 'productCode', 'code_product', 'code']) || '',
+    version_no: pick(['version_no', 'versionNo', 'version']) || '',
+    product_name: pick(['product_name', 'productName', 'name']) || '',
+    factory: pick(['factory', 'factory_name', 'plant']) || '',
+    product_category: pick(['product_category', 'productCategory', 'category']) || '',
+    customer_name: pick(['customer_name', 'customerName', 'customer']) || '',
+    status: pick(['status']) || '',
+    tax_rate: pick(['tax_rate', 'taxRate']) || '',
+    quoted_price_tax: pick(['quoted_price_tax', 'quotedPriceTax']) || '',
+    sales_revenue: pick(['sales_revenue', 'salesRevenue']) || '',
+    rebate_rate: pick(['rebate_rate', 'rebateRate']) || '',
+    account_period_days: pick(['account_period_days', 'accountPeriodDays']) || '',
+    freight_amount: pick(['freight_amount', 'freightAmount']) || '',
+    material_total: pick(['material_total', 'materialTotal']) || '',
+    labor_total: pick(['labor_total', 'laborTotal']) || '',
+    expense_total: pick(['expense_total', 'expenseTotal']) || '',
+    total_cost: pick(['total_cost', 'totalCost']) || '',
+    contribution_amount: pick(['contribution_amount', 'contributionAmount']) || '',
+    contribution_rate: pick(['contribution_rate', 'contributionRate']) || '',
+    gross_profit_amount: pick(['gross_profit_amount', 'grossProfitAmount']) || '',
+    gross_profit_rate: pick(['gross_profit_rate', 'grossProfitRate']) || '',
+    pretax_profit_amount: pick(['pretax_profit_amount', 'pretaxProfitAmount']) || '',
+    pretax_profit_rate: pick(['pretax_profit_rate', 'pretaxProfitRate']) || '',
+    income_tax_amount: pick(['income_tax_amount', 'incomeTaxAmount']) || '',
+    income_tax_rate: pick(['income_tax_rate', 'incomeTaxRate']) || '',
+    net_profit_amount: pick(['net_profit_amount', 'netProfitAmount']) || '',
+    net_profit_rate: pick(['net_profit_rate', 'netProfitRate']) || ''
+  }
+}
+
+function normalizeDetailRow(row, section) {
+  if (!row || typeof row !== 'object') return row
+  const normalizedRow = unwrapRecordData(row)
+  const pick = (keys) => pickFirstObject(normalizedRow, keys)
+  const normalizeLineNo = (fallback) => {
+    const raw = pick(['line_no', 'lineNo', 'row_no', 'rowNo'])
+    if (raw !== undefined && raw !== null && String(raw).trim() !== '') {
+      const asNumber = Number(raw)
+      return Number.isFinite(asNumber) ? asNumber : raw
+    }
+    return fallback
+  }
+
+  if (section === 'material') {
+    return {
+      line_no: normalizeLineNo(''),
+      item_name: pick(['item_name', 'itemName', 'material_name', 'name']) || '',
+      item_code: pick(['item_code', 'itemCode', 'material_code', 'code']) || '',
+      spec: pick(['spec', 'specification']) || '',
+      unit: pick(['unit', 'unit_name']) || '',
+      formula_qty: pick(['formula_qty', 'formulaQty', 'qty_formula']) || '',
+      yield_rate: pick(['yield_rate', 'yieldRate']) || '',
+      actual_qty: pick(['actual_qty', 'actualQty']) || '',
+      unit_price: pick(['unit_price', 'unitPrice', 'price']) || '',
+      amount: pick(['amount', 'line_amount', 'subtotal']) || ''
+    }
+  }
+
+  if (section === 'labor') {
+    return {
+      line_no: normalizeLineNo(''),
+      process_name: pick(['process_name', 'processName', 'process']) || '',
+      work_minutes: pick(['work_minutes', 'workMinutes', 'minutes']) || '',
+      worker_count: pick(['worker_count', 'workerCount', 'workers']) || '',
+      wage: pick(['wage', 'salary']) || '',
+      social_security: pick(['social_security', 'socialSecurity']) || '',
+      housing_fund: pick(['housing_fund', 'housingFund']) || '',
+      subtotal: pick(['subtotal', 'amount', 'line_amount']) || ''
+    }
+  }
+
+  return {
+    line_no: normalizeLineNo(''),
+    expense_type: pick(['expense_type', 'expenseType', 'type']) || '',
+    detail_name: pick(['detail_name', 'detailName', 'name']) || '',
+    amount: pick(['amount', 'line_amount', 'subtotal']) || '',
+    ratio: pick(['ratio', 'rate']) || ''
+  }
+}
+
+async function loadMainRecord(recordId) {
+  if (!recordId) return null
+
+  let payload = null
+  try {
+    payload = await withTimeout(
+      hostDataApi.getRecord(MAIN_ENTITY_CODE, recordId),
+      `getRecord(${MAIN_ENTITY_CODE}, ${recordId})`
+    )
+    debugLog('self-load:getRecord:success', { recordId })
+  }
+  catch (_error) {
+    debugLog('self-load:getRecord:failed', { recordId })
+  }
+
+  const normalized = normalizeJsonPayload(payload)
+  if (normalized && typeof normalized === 'object') {
+    return normalized.record || normalized.model || normalized
+  }
+
+  const queryBodies = [
+    { filters: { id: recordId }, pageIndex: 0, pageSize: 1 },
+    { filters: [{ field: 'id', operator: 'eq', value: recordId }], pageIndex: 0, pageSize: 1 },
+    { filters: { card_no: recordId }, pageIndex: 0, pageSize: 1 },
+    { filters: [{ field: 'card_no', operator: 'eq', value: recordId }], pageIndex: 0, pageSize: 1 }
+  ]
+
+  for (const body of queryBodies) {
+    try {
+      const queryPayload = await withTimeout(
+        hostDataApi.queryRecords(MAIN_ENTITY_CODE, body),
+        `queryRecords(${MAIN_ENTITY_CODE})`
+      )
+      const rows = extractRowsFromPayload(queryPayload)
+      if (rows.length) return rows[0]
+    }
+    catch (_error) {
+      continue
+    }
+  }
+
+  return null
+}
+
+async function loadDetailRowsByCardNo(cardNo, entityCode) {
+  if (!cardNo) return []
+  const queryBodies = [
+    { filters: { card_no: cardNo }, pageIndex: 0, pageSize: 500 },
+    { filters: [{ field: 'card_no', operator: 'eq', value: cardNo }], pageIndex: 0, pageSize: 500 }
+  ]
+
+  for (const body of queryBodies) {
+    try {
+      const payload = await withTimeout(
+        hostDataApi.queryRecords(entityCode, body),
+        `queryRecords(${entityCode})`
+      )
+      const rows = extractRowsFromPayload(payload)
+      if (Array.isArray(rows)) return rows
+    }
+    catch (_error) {
+      continue
+    }
+  }
+
+  return []
+}
+
+async function loadPayloadByRecordId(recordId) {
+  const mainRecord = await loadMainRecord(recordId)
+  if (!mainRecord) {
+    return {
+      product: {},
+      materialRows: [],
+      laborRows: [],
+      expenseRows: []
+    }
+  }
+
+  const normalizedMain = unwrapRecordData(mainRecord)
+  const cardNo = normalizedMain.card_no || normalizedMain.cardNo || ''
+  const [materialRows, laborRows, expenseRows] = await Promise.all([
+    loadDetailRowsByCardNo(cardNo, 'cost_card_material'),
+    loadDetailRowsByCardNo(cardNo, 'cost_card_labor'),
+    loadDetailRowsByCardNo(cardNo, 'cost_card_expense')
+  ])
+
+  return {
+    product: normalizeRecord(normalizedMain),
+    materialRows: materialRows.map((row, index) => {
+      const normalized = normalizeDetailRow(row, 'material')
+      if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
+      return normalized
+    }),
+    laborRows: laborRows.map((row, index) => {
+      const normalized = normalizeDetailRow(row, 'labor')
+      if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
+      return normalized
+    }),
+    expenseRows: expenseRows.map((row, index) => {
+      const normalized = normalizeDetailRow(row, 'expense')
+      if (!normalized.line_no && normalized.line_no !== 0) normalized.line_no = index + 1
+      return normalized
+    })
+  }
+}
+
 function parseInitialPayload() {
   if (props.initialDataJson) {
     try {
@@ -508,6 +796,7 @@ function parseInitialPayload() {
 watch(
   () => props.initialDataJson,
   (value) => {
+    if (props.recordId) return
     console.info('[cost-card-form-base] watch:initialDataJson', {
       length: value?.length || 0
     })
@@ -519,8 +808,37 @@ watch(
 watch(
   () => props.initialVersion,
   (version) => {
+    if (props.recordId) return
     console.info('[cost-card-form-base] watch:initialVersion', { version })
     applyInitialData(parseInitialPayload())
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.recordId,
+  async (recordId) => {
+    debugLog('watch:recordId', { recordId })
+    if (!recordId) {
+      applyInitialData({
+        product: {},
+        materialRows: [],
+        laborRows: [],
+        expenseRows: []
+      })
+      return
+    }
+
+    const payload = await loadPayloadByRecordId(recordId)
+    debugLog('self-load:payload-ready', {
+      recordId,
+      productCode: payload.product?.product_code || '',
+      productName: payload.product?.product_name || '',
+      materialCount: payload.materialRows?.length || 0,
+      laborCount: payload.laborRows?.length || 0,
+      expenseCount: payload.expenseRows?.length || 0
+    })
+    applyInitialData(payload)
   },
   { immediate: true }
 )
