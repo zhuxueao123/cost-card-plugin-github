@@ -38,9 +38,27 @@ const pluginContext = usePluginContext()
 const hostDataApi = useHostDataApi()
 const MAIN_ENTITY_CODE = 'cost_card'
 const DEBUG_PREFIX = '[cost-card-create]'
+const REQUEST_TIMEOUT_MS = 8000
 
 function debugLog(stage, payload) {
   console.info(`${DEBUG_PREFIX} ${stage}`, payload)
+}
+
+function withTimeout(promise, label, timeoutMs = REQUEST_TIMEOUT_MS) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`${label} timeout after ${timeoutMs}ms`))
+    }, timeoutMs)
+    Promise.resolve(promise)
+      .then((value) => {
+        clearTimeout(timer)
+        resolve(value)
+      })
+      .catch((error) => {
+        clearTimeout(timer)
+        reject(error)
+      })
+  })
 }
 
 const loadedData = ref(null)
@@ -197,7 +215,10 @@ async function loadMainRecordByHostApi(recordId) {
 
   let payload = null
   try {
-    payload = await hostDataApi.getRecord(MAIN_ENTITY_CODE, recordId)
+    payload = await withTimeout(
+      hostDataApi.getRecord(MAIN_ENTITY_CODE, recordId),
+      `getRecord(${MAIN_ENTITY_CODE}, ${recordId})`
+    )
     debugLog('main:getRecord:success', {
       recordId,
       payloadKeys: payload && typeof payload === 'object' ? Object.keys(payload) : typeof payload
@@ -250,7 +271,10 @@ async function loadMainRecordByHostApi(recordId) {
   for (const body of queryBodies) {
     let queryPayload = null
     try {
-      queryPayload = await hostDataApi.queryRecords(MAIN_ENTITY_CODE, body)
+      queryPayload = await withTimeout(
+        hostDataApi.queryRecords(MAIN_ENTITY_CODE, body),
+        `queryRecords(${MAIN_ENTITY_CODE})`
+      )
       debugLog('main:queryRecords:success', { recordId, body })
     }
     catch (_error) {
@@ -342,7 +366,10 @@ async function loadDetailRowsByCardNo(cardNo, entityCode) {
   for (const body of queryBodies) {
     let payload = null
     try {
-      payload = await hostDataApi.queryRecords(entityCode, body)
+      payload = await withTimeout(
+        hostDataApi.queryRecords(entityCode, body),
+        `queryRecords(${entityCode})`
+      )
       debugLog('detail:query:success', { entityCode, cardNo, body })
     }
     catch (_error) {
@@ -393,11 +420,25 @@ async function loadById(recordId) {
       product_code: normalizedMain.product_code,
       product_name: normalizedMain.product_name
     })
-    const [materialRows, laborRows, expenseRows] = await Promise.all([
+    const [materialResult, laborResult, expenseResult] = await Promise.allSettled([
       loadDetailRowsByCardNo(cardNo, 'cost_card_material'),
       loadDetailRowsByCardNo(cardNo, 'cost_card_labor'),
       loadDetailRowsByCardNo(cardNo, 'cost_card_expense')
     ])
+
+    const materialRows = materialResult.status === 'fulfilled' ? materialResult.value : null
+    const laborRows = laborResult.status === 'fulfilled' ? laborResult.value : null
+    const expenseRows = expenseResult.status === 'fulfilled' ? expenseResult.value : null
+
+    if (materialResult.status === 'rejected') {
+      debugLog('detail:query:error', { entityCode: 'cost_card_material', error: String(materialResult.reason) })
+    }
+    if (laborResult.status === 'rejected') {
+      debugLog('detail:query:error', { entityCode: 'cost_card_labor', error: String(laborResult.reason) })
+    }
+    if (expenseResult.status === 'rejected') {
+      debugLog('detail:query:error', { entityCode: 'cost_card_expense', error: String(expenseResult.reason) })
+    }
 
     loadedData.value = {
       product: normalizeRecord(normalizedMain),
