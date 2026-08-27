@@ -13,7 +13,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onActivated, ref, watch } from 'vue'
 import { useHostDataApi, usePluginContext } from '@trusteem/asapflow-plugin-sdk'
 import CostCardFormBase from './cost-card-form-base.vue'
 import { COST_CARD_DEFAULT_SCENES, useCostCardSceneConfig } from './use-cost-card-scene-config'
@@ -416,4 +416,11 @@ watch(
   },
   { immediate: true }
 )
+
+onActivated(async () => {
+  const recordId = currentRecordId.value
+  debugLog('onActivated', { recordId })
+  if (!recordId) return
+  await loadById(recordId)
+})
 </script>

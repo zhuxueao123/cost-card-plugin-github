@@ -225,32 +225,32 @@ const PRODUCT_FIELDS = [
 ]
 
 const product = reactive({
-  product_code: 'CC-2026-001',
-  version_no: '1.0',
-  product_name: '叮咚-南瓜巴斯克',
-  factory: '南通',
-  product_category: '西餐',
-  customer_name: '叮咚买菜',
-  tax_rate: '13%',
-  quoted_price_tax: '113.00',
-  sales_revenue: '100.00',
-  rebate_rate: '5%',
-  account_period_days: '30',
-  freight_amount: '0.00',
-  material_total: '45.60',
-  labor_total: '12.30',
-  expense_total: '15.00',
-  total_cost: '87.40',
-  contribution_amount: '51.20',
-  contribution_rate: '51.20%',
-  gross_profit_amount: '50.51',
-  gross_profit_rate: '50.51%',
-  pretax_profit_amount: '35.51',
-  pretax_profit_rate: '35.51%',
-  income_tax_amount: '4.62',
-  income_tax_rate: '4.62%',
-  net_profit_amount: '30.89',
-  net_profit_rate: '30.89%'
+  product_code: '',
+  version_no: '',
+  product_name: '',
+  factory: '',
+  product_category: '',
+  customer_name: '',
+  tax_rate: '',
+  quoted_price_tax: '',
+  sales_revenue: '',
+  rebate_rate: '',
+  account_period_days: '',
+  freight_amount: '',
+  material_total: '',
+  labor_total: '',
+  expense_total: '',
+  total_cost: '',
+  contribution_amount: '',
+  contribution_rate: '',
+  gross_profit_amount: '',
+  gross_profit_rate: '',
+  pretax_profit_amount: '',
+  pretax_profit_rate: '',
+  income_tax_amount: '',
+  income_tax_rate: '',
+  net_profit_amount: '',
+  net_profit_rate: ''
 })
 
 const materialColumns = [
@@ -282,30 +282,11 @@ const expenseColumns = [
   { key: 'ratio', label: '占比' }
 ]
 
-const materialRows = ref([
-  { item_name: '巴斯克酱', item_code: '-', spec: '-', unit: '-', formula_qty: '-', yield_rate: '-', actual_qty: '-', unit_price: '-', amount: '2.08' },
-  { item_name: '牛奶', item_code: 'MT-001', spec: '全脂', unit: 'g', formula_qty: '100', yield_rate: '90%', actual_qty: '111.11', unit_price: '0.005', amount: '0.56' },
-  { item_name: '巧克力', item_code: 'MT-002', spec: '黑巧70%', unit: 'g', formula_qty: '50', yield_rate: '90%', actual_qty: '55.56', unit_price: '0.024', amount: '1.33' },
-  { item_name: '贝贝南瓜', item_code: 'MT-003', spec: '去皮', unit: 'g', formula_qty: '200', yield_rate: '90%', actual_qty: '222.22', unit_price: '0.010', amount: '2.22' },
-  { item_name: '包材', item_code: 'MT-004', spec: '食品级', unit: '套', formula_qty: '1', yield_rate: '90%', actual_qty: '1.11', unit_price: '3.50', amount: '3.89' }
-])
+const materialRows = ref([])
 
-const laborRows = ref([
-  { process_name: '清洗', work_minutes: '120', worker_count: '2', wage: '25.00', social_security: '3.75', housing_fund: '2.50', subtotal: '6.17' },
-  { process_name: '切割', work_minutes: '180', worker_count: '3', wage: '28.00', social_security: '4.20', housing_fund: '2.80', subtotal: '8.55' },
-  { process_name: '调配', work_minutes: '240', worker_count: '2', wage: '30.00', social_security: '4.50', housing_fund: '3.00', subtotal: '7.67' },
-  { process_name: '烘烤', work_minutes: '600', worker_count: '1', wage: '32.00', social_security: '4.80', housing_fund: '3.20', subtotal: '6.67' },
-  { process_name: '包装', work_minutes: '90', worker_count: '2', wage: '22.00', social_security: '3.30', housing_fund: '2.20', subtotal: '1.38' }
-])
+const laborRows = ref([])
 
-const expenseRows = ref([
-  { expense_type: '变动制造', detail_name: '水电煤', amount: '3.20', ratio: '3.7%' },
-  { expense_type: '销售费用', detail_name: '渠道费', amount: '5.00', ratio: '5.7%' },
-  { expense_type: '固定制造', detail_name: '资产摊销', amount: '4.50', ratio: '5.1%' },
-  { expense_type: '管理费用', detail_name: '管理工资', amount: '3.80', ratio: '4.3%' },
-  { expense_type: '财务费用', detail_name: '银行利息', amount: '2.20', ratio: '2.5%' },
-  { expense_type: '总部分摊', detail_name: '行政分摊', amount: '1.50', ratio: '1.7%' }
-])
+const expenseRows = ref([])
 
 const visibleProductFields = computed(() => {
   const visible = props.productFieldVisibility || []
@@ -449,6 +430,18 @@ function applyRowsData(targetRowsRef, rowsData) {
 
 function applyInitialData(payload) {
   if (!payload || typeof payload !== 'object') return
+  console.info('[cost-card-form-base] applyInitialData', {
+    hasProduct: !!(payload.product || payload.model),
+    materialCount: Array.isArray(payload.materialRows || payload.material || payload.material_items)
+      ? (payload.materialRows || payload.material || payload.material_items).length
+      : 0,
+    laborCount: Array.isArray(payload.laborRows || payload.labor || payload.labor_items)
+      ? (payload.laborRows || payload.labor || payload.labor_items).length
+      : 0,
+    expenseCount: Array.isArray(payload.expenseRows || payload.expense || payload.expense_items)
+      ? (payload.expenseRows || payload.expense || payload.expense_items).length
+      : 0
+  })
   applyProductData(payload.product || payload.model || {})
   applyRowsData(materialRows, payload.materialRows || payload.material || payload.material_items)
   applyRowsData(laborRows, payload.laborRows || payload.labor || payload.labor_items)
